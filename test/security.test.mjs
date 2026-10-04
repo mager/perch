@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { config } from '../src/config.mjs';
-import { sign,verify,nonce,isOwner } from '../src/auth.mjs';
+import { sign,verify,nonce,isOwner,scopedClaims } from '../src/auth.mjs';
 import { createHandler } from '../src/handler.mjs';
 import { sanitize } from '../src/schema.mjs';
 import { agentConfig,parseSessions } from '../agent/agent.mjs';
@@ -28,7 +28,7 @@ test('unauthenticated and agent tokens cannot read status',async()=>{
   for(const headers of [{},{authorization:`Bearer ${cfg.machines.mini.token}`},{cookie:'__Host-perch=forged'}]){const r=await request('machines',{headers});assert.equal(r.statusCode,401);assert.equal(r.reads,0);assert.equal(r.headers['Cache-Control'],'no-store, private');}
 });
 test('owner cookie can read status, other owner cannot',async()=>{
-  const user={sub:'owner',email:'owner@gmail.com',email_verified:true,exp:Date.now()+60000};
+  const user={...scopedClaims(cfg,'session'),sub:'owner',email:'owner@gmail.com',email_verified:true,exp:Date.now()+60000};
   assert.equal((await request('machines',{headers:{cookie:`__Host-perch=${sign(user,cfg.secret)}`}})).statusCode,200);
   assert.equal((await request('machines',{headers:{cookie:`__Host-perch=${sign({...user,email:'other@gmail.com'},cfg.secret)}`}})).statusCode,401);
 });
@@ -68,7 +68,7 @@ test('failed pane discovery stays unavailable through ingestion',()=>{
 });
 test('expired and revoked owner sessions never read storage',async()=>{
   for(const user of [{sub:'owner',email:'owner@gmail.com',email_verified:true,exp:1},{sub:'previous-owner',exp:Date.now()+60000}]){
-    const r=await request('machines',{headers:{cookie:`__Host-perch=${sign(user,cfg.secret)}`}});
+    const r=await request('machines',{headers:{cookie:`__Host-perch=${sign({...scopedClaims(cfg,'session'),...user},cfg.secret)}`}});
     assert.equal(r.statusCode,401);assert.equal(r.reads,0);
   }
 });
@@ -81,4 +81,56 @@ test('public config contains only login metadata, never machine secrets',async()
   const r=await request('config');
   assert.deepEqual(Object.keys(r.data).sort(),['clientId','demo','nonce','signedIn']);
   assert.equal(r.data.signedIn,false);assert.match(r.headers['Set-Cookie'],/HttpOnly/);
+});
+
+test('session and nonce cannot cross installation or owner boundaries even with a reused secret',async()=>{
+  const user={...scopedClaims(cfg,'session'),sub:'owner',email:cfg.ownerEmail,email_verified:true,exp:Date.now()+60000};
+  const challenge=nonce(cfg);
+  for(const target of [{...cfg,origin:'https://another.example'},{...cfg,clientId:'another-client'},{...cfg,ownerEmail:'another@gmail.com'}]){
+    const r=await request('machines',{getConfig:()=>target,headers:{cookie:`__Host-perch=${sign(user,cfg.secret)}`}});
+    assert.equal(r.statusCode,401);assert.equal(r.reads,0);
+    let verifications=0;
+    const login=await request('login',{getConfig:()=>target,method:'POST',headers:{origin:target.origin,'content-type':'application/json',cookie:`__Host-perch-nonce=${challenge.token}`},body:{credential:'token'},verifyGoogle:async()=>{verifications++;return {...user,nonce:challenge.value};}});
+    assert.equal(login.statusCode,401);assert.equal(verifications,0);
+  }
+});
+
+test('unscoped cookies and login nonces cannot be used as sessions',async()=>{
+  for(const claims of [{},{...scopedClaims(cfg,'nonce')}]){
+    const token=sign({...claims,sub:'owner',email:cfg.ownerEmail,email_verified:true,exp:Date.now()+60000},cfg.secret);
+    const r=await request('machines',{headers:{cookie:`__Host-perch=${token}`}});
+    assert.equal(r.statusCode,401);assert.equal(r.reads,0);
+  }
+});
+
+test('a valid Google login for a different account never receives a session',async()=>{
+  const challenge=nonce(cfg);
+  const r=await request('login',{method:'POST',headers:{origin:cfg.origin,'content-type':'application/json',cookie:`__Host-perch-nonce=${challenge.token}`},body:{credential:'valid-other-account'},verifyGoogle:async()=>({sub:'another-person',email:'another@gmail.com',email_verified:true,nonce:challenge.value})});
+  assert.equal(r.statusCode,403);assert.equal(r.headers['Set-Cookie'],undefined);assert.equal(r.reads,0);
+});
+
+test('Google verification failures cannot create sessions',async()=>{
+  const challenge=nonce(cfg);
+  const r=await request('login',{method:'POST',headers:{origin:cfg.origin,'content-type':'application/json',cookie:`__Host-perch-nonce=${challenge.token}`},body:{credential:'invalid'},verifyGoogle:async()=>{throw new Error('invalid signature/audience/issuer/expiry');}});
+  assert.equal(r.statusCode,401);assert.equal(r.headers['Set-Cookie'],undefined);
+});
+
+test('owner identity changes revoke existing sessions, pinned subjects survive email changes',async()=>{
+  const pinned={...cfg,ownerSub:'stable-owner-id'};
+  const user={...scopedClaims(pinned,'session'),sub:pinned.ownerSub,email:'old@gmail.com',email_verified:true,exp:Date.now()+60000};
+  const headers={cookie:`__Host-perch=${sign(user,cfg.secret)}`};
+  assert.equal((await request('machines',{getConfig:()=>({...pinned,ownerEmail:'new@gmail.com'}),headers})).statusCode,200);
+  const r=await request('machines',{getConfig:()=>({...pinned,ownerSub:'new-owner-id'}),headers});
+  assert.equal(r.statusCode,401);assert.equal(r.reads,0);
+});
+
+test('read cookies cannot write heartbeats and unknown machine IDs cannot select data',async()=>{
+  const user={...scopedClaims(cfg,'session'),sub:'owner',email:cfg.ownerEmail,email_verified:true,exp:Date.now()+60000};
+  const cookie=`__Host-perch=${sign(user,cfg.secret)}`;
+  const r=await request('heartbeat',{method:'POST',headers:{cookie,'x-perch-machine':'mini','content-type':'application/json'},body:payload()});
+  assert.equal(r.statusCode,401);assert.equal(r.writes.length,0);
+  for(const id of ['__proto__','constructor','unknown']){
+    const result=await request('heartbeat',{method:'POST',headers:{'x-perch-machine':id,authorization:`Bearer ${cfg.machines.mini.token}`,'content-type':'application/json'},body:payload()});
+    assert.equal(result.statusCode,401);assert.equal(result.writes.length,0);
+  }
 });

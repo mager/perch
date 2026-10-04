@@ -1,6 +1,15 @@
 import {freshness,relativeTime,bytes,uptime,historyPoints,demoScenario,isMetric,escapeHTML as esc} from './model.js';
 const root=document.querySelector('#app');
 const state={config:null,data:null,selected:null,view:'overview',scenario:'normal',error:null,busy:false,serverTime:0,observedAt:0};
+let authEpoch=0;
+const authChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('perch-auth'):null;
+function clearPrivate(message='Checking your session…'){
+  authEpoch++;
+  Object.assign(state,{config:null,data:null,selected:null,error:null,busy:false,serverTime:0,observedAt:0});
+  root.innerHTML=`<main id="main" class="welcome">${brand()}<h1>${esc(message)}</h1></main>`;
+  announce('');
+  return authEpoch;
+}
 const now=()=>state.serverTime?state.serverTime+performance.now()-state.observedAt:Date.now();
 const icon=(name)=>{
   const paths={refresh:'<path d="M13 5a6 6 0 1 0 1 7M13 2v4H9"/>',lock:'<rect x="4" y="7" width="8" height="7" rx="2"/><path d="M6 7V5a2 2 0 0 1 4 0v2"/>',info:'<circle cx="8" cy="8" r="6"/><path d="M8 7v4m0-7v1"/>',arrow:'<path d="M3 8h10M9 4l4 4-4 4"/>',check:'<path d="m4 8 3 3 5-6"/>'};
@@ -60,19 +69,23 @@ function updateAge(){
   machines.forEach(m=>{const dot=root.querySelector(`[data-machine-dot="${CSS.escape(m.id)}"]`);if(dot)dot.className=`dot ${freshness(m.snapshot,now())}`;});
 }
 async function refresh(manual=false){
-  if(state.busy||document.hidden)return;
+  if(state.busy||document.hidden||!(state.config?.demo||state.config?.signedIn))return;
+  const epoch=authEpoch;
   state.busy=true;if(state.data)render();
   try{
     const data=await api('machines');
+    if(epoch!==authEpoch)return;
     if(!Array.isArray(data.machines)||!isMetric(data.serverTime))throw new Error('The server returned an unexpected snapshot.');
     state.data=data;state.serverTime=data.serverTime;state.observedAt=performance.now();state.error=null;
     if(manual)announce('Snapshots refreshed.');
   }catch(error){
-    if(error.status===401){state.data=null;state.busy=false;await initialize('Your session ended. Sign in again to see your machines.');return;}
+    if(epoch!==authEpoch)return;
+    if(error.status===401){await initialize('Your session ended. Sign in again to see your machines.');return;}
     state.error=error.message;
     if(!state.data){showUnavailable(error.message);return;}
     announce('Could not refresh. The last fetched snapshot is still shown.');
-  }finally{state.busy=false;}
+  }finally{if(epoch===authEpoch)state.busy=false;}
+  if(epoch!==authEpoch)return;
   render();
 }
 function showUnavailable(message){root.innerHTML=`<main id="main" class="welcome">${brand()}<p class="eyebrow">LET’S GET YOU SETTLED</p><h1>Your perch needs a little setup.</h1><p class="muted">${esc(message)}</p><p class="muted">If this is a new installation, configure Google sign-in, your owner account, and Redis in the hosting environment. If it worked before, check the service connection.</p><div class="welcome-actions"><button class="button primary" id="retry">Try again</button><a class="button" href="https://github.com/mager/perch#deploy-on-vercel">Setup guide ${icon('arrow')}</a></div><p class="welcome-note">Your Mac sends outbound heartbeats. The web portal is hosted separately so it can stay available during a reporting interruption.</p></main>`;root.querySelector('#retry').addEventListener('click',()=>initialize());}
@@ -87,28 +100,40 @@ function loadGoogle(){
   });return googlePromise;
 }
 async function showSignIn(message=''){
+  const epoch=authEpoch;
   root.innerHTML=`<main id="main" class="welcome">${brand()}<p class="eyebrow">YOUR MAC. WITHIN REACH.</p><h1>A little closer<br>to your machine.</h1><p class="muted">Sign in to your private lookout. Your latest heartbeat, resources, and sessions will be waiting here.</p><div class="signin-slot" id="google-signin"><p class="muted">Loading secure sign-in…</p></div><p id="auth-message" class="auth-error" role="status">${esc(message)}</p><button class="button" id="retry-signin">Reload sign-in</button><p class="welcome-note">${icon('lock')} Only the Google account configured by this installation’s owner can view machine data.</p></main>`;
   root.querySelector('#retry-signin').addEventListener('click',()=>initialize());
   try{
     await loadGoogle();
-    if(!document.querySelector('#google-signin'))return;
+    if(epoch!==authEpoch||!document.querySelector('#google-signin'))return;
     window.google.accounts.id.initialize({client_id:state.config.clientId,nonce:state.config.nonce,auto_select:false,callback:async({credential})=>{
+      if(epoch!==authEpoch)return;
       const target=document.querySelector('#auth-message');target.textContent='Verifying your account…';
-      try{await api('login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential})});await refresh();}catch(error){if(target.isConnected)target.textContent=error.message;}
+      try{await api('login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential})});if(epoch!==authEpoch)return;state.config.signedIn=true;await refresh();}catch(error){if(epoch===authEpoch&&target.isConnected)target.textContent=error.message;}
     }});
     const target=root.querySelector('#google-signin');target.replaceChildren();window.google.accounts.id.renderButton(target,{type:'standard',theme:'outline',size:'large',shape:'pill',text:'signin_with',width:280});
-  }catch(error){const target=root.querySelector('#auth-message');if(target)target.textContent=error.message;root.querySelector('#google-signin')?.replaceChildren();}
+  }catch(error){if(epoch!==authEpoch)return;const target=root.querySelector('#auth-message');if(target)target.textContent=error.message;root.querySelector('#google-signin')?.replaceChildren();}
 }
 async function logout(){
-  const button=document.querySelector('#logout');button.disabled=true;
-  try{await api('logout',{method:'POST'});state.data=null;state.error=null;window.google?.accounts?.id.disableAutoSelect();await initialize('You’re signed out.');}catch(error){state.error='Sign-out failed. Try again.';render();}
+  const epoch=clearPrivate('Signing out…');
+  try{
+    await api('logout',{method:'POST'});
+    authChannel?.postMessage('signed-out');
+    if(epoch!==authEpoch)return;
+    window.google?.accounts?.id.disableAutoSelect();await initialize('You’re signed out.');
+  }catch{
+    if(epoch===authEpoch)showUnavailable('Sign-out could not be confirmed. Your session may still be active. Try again, then sign out.');
+  }
 }
 async function initialize(message=''){
-  try{state.config=await api('config');if(state.config.demo||state.config.signedIn)await refresh();else await showSignIn(message);}catch(error){showUnavailable(error.message);}
+  const epoch=clearPrivate();
+  try{const config=await api('config');if(epoch!==authEpoch)return;state.config=config;if(config.demo||config.signedIn)await refresh();else await showSignIn(message);}catch(error){if(epoch===authEpoch)showUnavailable(error.message);}
 }
+if(authChannel)authChannel.onmessage=event=>{if(event.data==='signed-out'&&!state.config?.demo)initialize('You’re signed out.');};
 setInterval(()=>{if(!document.hidden&&state.data)refresh();},60000);
 setInterval(()=>{if(!document.hidden)updateAge();},10000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(state.data||state.config?.demo||state.config?.signedIn)){updateAge();refresh();}});
-window.addEventListener('pageshow',event=>{if(event.persisted){state.data=null;initialize();}});
+window.addEventListener('pagehide',()=>clearPrivate());
+window.addEventListener('pageshow',event=>{if(event.persisted)initialize();});
 window.addEventListener('online',()=>{if(state.data)refresh();});
 initialize();

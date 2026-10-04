@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
+import { installationScope } from './identity.mjs';
 export const SESSION = '__Host-perch';
 export const NONCE = '__Host-perch-nonce';
 export function equal(a, b) {
@@ -25,9 +26,11 @@ export function cookie(name,value,maxAge,cfg) {
 }
 export function readCookie(req,name,cfg) {return cookies(req)[cfg.origin.startsWith('https:')?name:name.replace('__Host-','')];}
 export function isOwner(payload,cfg) {
-  if (!payload || !payload.sub) return false;
+  if (!payload || typeof payload.sub !== 'string' || !payload.sub) return false;
   if (cfg.ownerSub) return equal(payload.sub,cfg.ownerSub);
-  return payload.email_verified === true && (payload.email?.endsWith('@gmail.com') || Boolean(payload.hd)) && payload.email?.toLowerCase() === cfg.ownerEmail;
+  return typeof payload.email === 'string' && payload.email_verified === true && (payload.email.endsWith('@gmail.com') || (typeof payload.hd === 'string' && Boolean(payload.hd))) && payload.email.toLowerCase() === cfg.ownerEmail;
 }
-export function authorized(req,cfg) { const user=verify(readCookie(req,SESSION,cfg),cfg.secret); return isOwner(user,cfg)?user:null; }
-export function nonce(cfg) {const value=randomBytes(24).toString('base64url');return {value,token:sign({nonce:value,exp:Date.now()+300_000},cfg.secret)};}
+export function scopedClaims(cfg,purpose) {return {aud:installationScope(cfg),purpose};}
+export function inScope(value,cfg,purpose) {return value?.purpose===purpose && equal(value.aud,installationScope(cfg));}
+export function authorized(req,cfg) { const user=verify(readCookie(req,SESSION,cfg),cfg.secret); return inScope(user,cfg,'session')&&isOwner(user,cfg)?user:null; }
+export function nonce(cfg) {const value=randomBytes(24).toString('base64url');return {value,token:sign({...scopedClaims(cfg,'nonce'),nonce:value,exp:Date.now()+300_000},cfg.secret)};}

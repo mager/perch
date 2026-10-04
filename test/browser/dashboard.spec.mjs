@@ -92,6 +92,74 @@ test('Google button callback and logout use the real API contract',async({page})
   await expect(page.getByRole('heading',{name:'A little closer to your machine.'})).toBeVisible();
 });
 
+test('a late private response cannot restore the dashboard after sign-out',async({page})=>{
+  let signedIn=true,requests=0,release;
+  const pending=new Promise(resolve=>{release=resolve;});
+  await page.route('**/api/config',route=>json(route,{demo:false,clientId:'test',nonce:'test',signedIn}));
+  await page.route('https://accounts.google.com/**',route=>route.abort());
+  await page.route('**/api/logout',async route=>{signedIn=false;await json(route,{ok:true});});
+  await page.route('**/api/machines',async route=>{if(++requests>1)await pending;await json(route,{...fixture(),demo:false});});
+  await page.goto('/app');
+  await expect(page.getByRole('heading',{name:'Studio mini',exact:true})).toBeVisible();
+  const refreshRequest=page.waitForRequest('**/api/machines');
+  await page.getByRole('button',{name:'Refresh',exact:true}).click();await refreshRequest;
+  await page.getByRole('button',{name:'Sign out',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'A little closer to your machine.'})).toBeVisible();
+  const response=page.waitForResponse('**/api/machines');release();await (await response).finished();
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  await expect(page.getByRole('heading',{name:'Studio mini',exact:true})).toHaveCount(0);
+  await expect(page.getByText('website',{exact:true})).toHaveCount(0);
+  await expect(page.getByRole('heading',{name:'A little closer to your machine.'})).toBeVisible();
+});
+
+test('sign-out clears private snapshots in another open tab',async({context,page})=>{
+  let signedIn=true;
+  await context.route('**/api/config',route=>json(route,{demo:false,clientId:'test',nonce:'test',signedIn}));
+  await context.route('https://accounts.google.com/**',route=>route.abort());
+  await context.route('**/api/logout',async route=>{signedIn=false;await json(route,{ok:true});});
+  await context.route('**/api/machines',route=>json(route,{...fixture(),demo:false}));
+  await page.goto('/app');
+  await expect(page.getByRole('heading',{name:'Studio mini',exact:true})).toBeVisible();
+  const other=await context.newPage();await other.goto('/app');
+  await expect(other.getByRole('heading',{name:'Studio mini',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Sign out',exact:true}).click();
+  for(const tab of [page,other]){
+    await expect(tab.getByRole('heading',{name:'A little closer to your machine.'})).toBeVisible();
+    await expect(tab.getByText('website',{exact:true})).toHaveCount(0);
+  }
+});
+
+test('private data clears immediately even when sign-out cannot be confirmed',async({page})=>{
+  let release;
+  const pending=new Promise(resolve=>{release=resolve;});
+  await page.route('**/api/config',route=>json(route,{demo:false,clientId:'test',nonce:'test',signedIn:true}));
+  await page.route('**/api/machines',route=>json(route,{...fixture(),demo:false}));
+  await page.route('**/api/logout',async route=>{await pending;await json(route,{error:'Unavailable'},503);});
+  await page.goto('/app');
+  await page.getByRole('button',{name:'Sign out',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Signing out…'})).toBeVisible();
+  await expect(page.getByText('website',{exact:true})).toHaveCount(0);
+  release();
+  await expect(page.getByText('Sign-out could not be confirmed.',{exact:false})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Studio mini',exact:true})).toHaveCount(0);
+});
+
+test('a restored page hides its snapshot before checking the session',async({page})=>{
+  let restore=false,release;
+  const pending=new Promise(resolve=>{release=resolve;});
+  await page.route('**/api/config',async route=>{if(restore)await pending;await json(route,{demo:false,clientId:'test',nonce:'test',signedIn:!restore});});
+  await page.route('https://accounts.google.com/**',route=>route.abort());
+  await page.route('**/api/machines',route=>json(route,{...fixture(),demo:false}));
+  await page.goto('/app');
+  await expect(page.getByRole('heading',{name:'Studio mini',exact:true})).toBeVisible();
+  restore=true;
+  await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
+  await expect(page.getByText('website',{exact:true})).toHaveCount(0);
+  await expect(page.getByRole('heading',{name:'Checking your session…'})).toBeVisible();
+  release();
+  await expect(page.getByRole('heading',{name:'A little closer to your machine.'})).toBeVisible();
+});
+
 test('accessibility checks across landing, dashboard, and empty states',async({page})=>{
   for(const path of ['/','/app']){
     await page.goto(path);await expect(page.locator('h1')).toBeVisible();

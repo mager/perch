@@ -1,6 +1,6 @@
 import { OAuth2Client } from 'google-auth-library';
 import { config } from './config.mjs';
-import { authorized,cookie,readCookie,nonce,verify,sign,equal,isOwner,SESSION,NONCE } from './auth.mjs';
+import { authorized,cookie,readCookie,nonce,verify,sign,equal,isOwner,scopedClaims,inScope,SESSION,NONCE } from './auth.mjs';
 import { sanitize,InputError } from './schema.mjs';
 import { createStore } from './store.mjs';
 import { demoMachines } from './demo.mjs';
@@ -28,10 +28,10 @@ export function createHandler({getConfig=()=>config(),storeFactory=createStore,v
       if(action==='login'&&req.method==='POST'&&!cfg.demo){
         if(req.headers.origin!==cfg.origin)return reply(403,{error:'Origin rejected'});
         const data=await body(req), challenge=verify(readCookie(req,NONCE,cfg),cfg.secret);
-        if(!challenge?.nonce||typeof data.credential!=='string')return reply(401,{error:'Sign-in expired. Reload and try again.'});
+        if(!inScope(challenge,cfg,'nonce')||!challenge?.nonce||typeof data?.credential!=='string')return reply(401,{error:'Sign-in expired. Reload and try again.'});
         let user;try{user=await verifyGoogle(data.credential,cfg);}catch{return reply(401,{error:'Google sign-in could not be verified.'});}
         if(!equal(user?.nonce,challenge.nonce)||!isOwner(user,cfg))return reply(403,{error:'This account does not have access.'});
-        const session=sign({sub:user.sub,email:user.email,email_verified:user.email_verified,hd:user.hd,exp:clock()+8*3600000},cfg.secret);
+        const session=sign({...scopedClaims(cfg,'session'),sub:user.sub,email:user.email,email_verified:user.email_verified,hd:user.hd,exp:clock()+8*3600000},cfg.secret);
         res.setHeader('Set-Cookie',[cookie(SESSION,session,8*3600,cfg),cookie(NONCE,'',0,cfg)]);
         return reply(200,{ok:true});
       }

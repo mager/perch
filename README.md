@@ -38,6 +38,11 @@ The Mac makes outbound requests only. Perch opens no inbound ports on the Mac.
 The hosted page remains reachable during a Mac/network outage and labels old data.
 Each installation uses its own Google client, Redis database, owner, and agent tokens.
 There is no central Perch service or telemetry.
+Other people cannot register for access to your installation: every status read
+must authenticate as its configured owner. Storage and sessions are also bound to
+that installation's origin, Google client, and owner. Use separate databases and
+secrets for separate owners; the namespace is not a replacement for database
+permissions. See [security boundaries and verification limits](SECURITY.md).
 
 ## Local development
 
@@ -82,7 +87,8 @@ values below with `PERCH_ORIGIN=http://localhost:8787`, and run `npm run dev`.
 4. Set `GOOGLE_CLIENT_ID`, `PERCH_ORIGIN` (exact origin, no trailing slash), and
    `OWNER_EMAIL` (verified Gmail or Google Workspace account). For Google accounts
    using other email providers, pin the stable account ID with `OWNER_GOOGLE_SUB`.
-   A configured subject takes precedence over email. Never accept an arbitrary email
+   Pinning `OWNER_GOOGLE_SUB` is recommended for all owners because email addresses
+   can change or be reassigned. A configured subject takes precedence over email. Never accept an arbitrary email
    domain or all Google accounts.
 5. Generate a random `SESSION_SECRET`, then a separate random token for each Mac:
 
@@ -160,8 +166,13 @@ personal deployment target, not a guaranteed dollar cap or an availability SLA.
 Check provider limits before deploying for multiple machines or commercial use.
 
 Latest snapshots persist until deleted; history is bounded to 60 samples per
-machine. Remove `perch:v1:<machine-id>:latest` and `perch:v1:<machine-id>:history`
-from your Redis database when retiring a machine.
+machine. Remove `perch:v2:<scope>:<machine-id>:latest` and
+`perch:v2:<scope>:<machine-id>:history` from your Redis database when retiring a
+machine. The scope is a SHA-256 identifier derived from the configured origin,
+Google client, and owner. Changing those settings starts an empty namespace;
+the next heartbeat fills it. Rotating a session secret or machine token keeps
+the namespace. Upgrades do not import legacy `perch:v1:*` keys; remove those old
+records yourself when no longer needed. See [SECURITY.md](SECURITY.md).
 
 ## Development and contributions
 
