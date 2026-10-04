@@ -1,5 +1,6 @@
 export class InputError extends Error {}
 function number(value,min,max) {if(typeof value!=='number'||!Number.isFinite(value)||value<min||value>max)throw new InputError('Invalid metric');return value;}
+function count(value) {if(!Number.isInteger(value))throw new InputError('Invalid count');return number(value,0,1000);}
 function text(value,max) {if(typeof value!=='string'||value.length>max||/[\u0000-\u001f\u007f]/.test(value))throw new InputError('Invalid text');return value;}
 export function sanitize(input,now=Date.now()) {
   if(!input || typeof input!=='object' || Array.isArray(input))throw new InputError('Invalid payload');
@@ -11,5 +12,5 @@ export function sanitize(input,now=Date.now()) {
   if(!Array.isArray(input.sessions)||input.sessions.length>40)throw new InputError('Invalid sessions');
   if(!['ok','unavailable'].includes(input.tmuxStatus))throw new InputError('Invalid tmux status');
   if(input.sessions.some(s=>!s||typeof s!=='object'))throw new InputError('Invalid session');
-  return {sampledAt,platform:input.platform,hostname:text(input.hostname,120),uptime:number(input.uptime,0,1e10),cpu:number(input.cpu,0,100),memoryTotal:total,memoryUsed:used,disk,tmuxStatus:input.tmuxStatus,sessions:input.sessions.map(s=>({name:text(s.name,100),windows:number(s.windows,0,1000),attached:number(s.attached,0,1000),codexPanes:number(s.codexPanes,0,1000)}))};
+  return {sampledAt,platform:input.platform,hostname:text(input.hostname,120),uptime:number(input.uptime,0,1e10),cpu:number(input.cpu,0,100),memoryTotal:total,memoryUsed:used,disk,tmuxStatus:input.tmuxStatus,sessions:input.sessions.map(s=>({name:text(s.name,100),windows:count(s.windows),attached:count(s.attached),codexPanes:s.codexPanes===null?null:count(s.codexPanes)}))};
 }

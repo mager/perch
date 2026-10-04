@@ -7,8 +7,8 @@ const exec=promisify(execFile);
 function cpuTimes(){return os.cpus().reduce((a,c)=>{a.idle+=c.times.idle;a.total+=Object.values(c.times).reduce((s,n)=>s+n,0);return a;},{idle:0,total:0});}
 export function parseSessions(output,panes){
   const counts=new Map();
-  for(const row of panes.trim().split('\n')){const[name,command]=row.split('\t');if(command==='codex')counts.set(name,(counts.get(name)||0)+1);}
-  return output.trim().split('\n').filter(Boolean).slice(0,40).map(row=>{const[name,windows,attached]=row.split('\t');return {name:name.slice(0,100),windows:Number(windows),attached:Number(attached),codexPanes:counts.get(name)||0};});
+  for(const row of (panes??'').trim().split('\n')){const[name,command]=row.split('\t');if(command==='codex')counts.set(name,(counts.get(name)||0)+1);}
+  return output.trim().split('\n').filter(Boolean).slice(0,40).map(row=>{const[name,windows,attached]=row.split('\t');return {name:name.slice(0,100),windows:Number(windows),attached:Number(attached),codexPanes:panes===null?null:counts.get(name)||0};});
 }
 export async function collect(env=process.env){
   const before=cpuTimes();await delay(1000);const after=cpuTimes();
@@ -17,7 +17,7 @@ export async function collect(env=process.env){
   const tmux=env.PERCH_TMUX_PATH||'tmux';
   try{
     const{stdout}=await exec(tmux,['list-sessions','-F','#{session_name}\t#{session_windows}\t#{session_attached}'],{timeout:5000,maxBuffer:65536});
-    let panes='';try{panes=(await exec(tmux,['list-panes','-a','-F','#{session_name}\t#{pane_current_command}'],{timeout:5000,maxBuffer:65536})).stdout;}catch{}
+    let panes=null;try{panes=(await exec(tmux,['list-panes','-a','-F','#{session_name}\t#{pane_current_command}'],{timeout:5000,maxBuffer:65536})).stdout;}catch{}
     sessions=parseSessions(stdout,panes);tmuxStatus='ok';
   }catch(error){if(/no server running|no sessions|error connecting.*No such file/i.test(error.stderr||'')){try{await exec(tmux,['-V'],{timeout:3000});tmuxStatus='ok';}catch{}}}
   const total=after.total-before.total;

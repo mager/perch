@@ -59,3 +59,26 @@ test('agent disallows insecure remote destinations and excessive heartbeat rates
   assert.equal(agentConfig(env).interval,60);assert.throws(()=>agentConfig({...env,PERCH_URL:'http://example.com'}));assert.throws(()=>agentConfig({...env,PERCH_INTERVAL_SECONDS:'1'}));assert.throws(()=>agentConfig({...env,PERCH_URL:'https://user:pass@example.com'}));
 });
 test('tmux parser reports foreground codex panes without inferring task state',()=>{assert.deepEqual(parseSessions('project\t2\t0\n','project\tcodex\nproject\tzsh\n'),[{name:'project',windows:2,attached:0,codexPanes:1}]);});
+test('failed pane discovery stays unavailable through ingestion',()=>{
+  const sessions=parseSessions('project\t2\t0\n',null);
+  assert.equal(sessions[0].codexPanes,null);
+  assert.equal(sanitize({...payload(),sessions}).sessions[0].codexPanes,null);
+  assert.equal(parseSessions('project\t2\t0\n','')[0].codexPanes,0);
+  assert.throws(()=>sanitize({...payload(),sessions:[{...sessions[0],windows:1.5}]}));
+});
+test('expired and revoked owner sessions never read storage',async()=>{
+  for(const user of [{sub:'owner',email:'owner@gmail.com',email_verified:true,exp:1},{sub:'previous-owner',exp:Date.now()+60000}]){
+    const r=await request('machines',{headers:{cookie:`__Host-perch=${sign(user,cfg.secret)}`}});
+    assert.equal(r.statusCode,401);assert.equal(r.reads,0);
+  }
+});
+test('logout enforces origin and expires the secure session cookie',async()=>{
+  assert.equal((await request('logout',{method:'POST',headers:{origin:'https://evil.example'}})).statusCode,403);
+  const r=await request('logout',{method:'POST',headers:{origin:cfg.origin}});
+  assert.equal(r.statusCode,200);assert.match(r.headers['Set-Cookie'],/Max-Age=0; Secure/);
+});
+test('public config contains only login metadata, never machine secrets',async()=>{
+  const r=await request('config');
+  assert.deepEqual(Object.keys(r.data).sort(),['clientId','demo','nonce','signedIn']);
+  assert.equal(r.data.signedIn,false);assert.match(r.headers['Set-Cookie'],/HttpOnly/);
+});
