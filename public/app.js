@@ -101,7 +101,7 @@ function loadGoogle(){
 }
 async function showSignIn(message=''){
   const epoch=authEpoch;
-  root.innerHTML=`<main id="main" class="welcome">${brand()}<p class="eyebrow">YOUR MAC. WITHIN REACH.</p><h1>A little closer<br>to your machine.</h1><p class="muted">Sign in to your private lookout. Your latest heartbeat, resources, and sessions will be waiting here.</p><div class="signin-slot" id="google-signin"><p class="muted">Loading secure sign-in…</p></div><p id="auth-message" class="auth-error" role="status">${esc(message)}</p><button class="button" id="retry-signin">Reload sign-in</button><p class="welcome-note">${icon('lock')} Only the Google account configured by this installation’s owner can view machine data.</p></main>`;
+  root.innerHTML=`<main id="main" class="welcome">${brand()}<p class="eyebrow">YOUR MINI. WITHIN REACH.</p><h1>A little closer<br>to your machine.</h1><p class="muted">Sign in to your private lookout. Your latest heartbeat, resources, and sessions will be waiting here.</p><div class="signin-slot" id="google-signin"><p class="muted">Loading secure sign-in…</p></div><p id="auth-message" class="auth-error" role="status">${esc(message)}</p><button class="button" id="retry-signin">Reload sign-in</button><p class="welcome-note">${icon('lock')} Only the Google account configured by this installation’s owner can view machine data.</p></main>`;
   root.querySelector('#retry-signin').addEventListener('click',()=>initialize());
   try{
     await loadGoogle();
