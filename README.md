@@ -9,7 +9,7 @@ agent. Local unit/API tests and browser checks are included. The sample dashboar
 is usable now. Real Google sign-in, Upstash, and launchd still need end-to-end
 verification. Running the demo creates no accounts or agent services.
 
-The [project landing page](https://perch-khaki.vercel.app) is deployed on Vercel.
+The [project landing page](https://perch-mac-app.vercel.app) is deployed on Vercel.
 Its dashboard currently shows setup guidance because hosted owner authentication
 and storage are not configured. Use the local demo below for the interactive preview.
 

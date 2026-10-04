@@ -11,7 +11,7 @@ Backend, collector, launchd installer, responsive dashboard, landing page, and b
 assets exist. Local unit/API and browser tests cover the sample UI and authentication
 boundaries. Hosted Google sign-in, Redis, and launchd still require integration testing.
 The landing page and unconfigured app shell are deployed at
-`https://perch-khaki.vercel.app`; live routes and the hero asset were checked.
+`https://perch-mac-app.vercel.app`; live routes and the hero asset were checked.
 Do not describe real machine monitoring as end-to-end verified.
 
 ## Commands
