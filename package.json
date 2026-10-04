@@ -1,0 +1,22 @@
+{
+  "name": "perch-mac",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A private, open-source lookout for your Mac mini.",
+  "license": "MIT",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env.local scripts/dev.mjs",
+    "demo": "PERCH_DEMO=1 node scripts/dev.mjs",
+    "test": "node --test test/*.test.mjs",
+    "agent": "node --env-file-if-exists=.env.agent agent/agent.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.39.0",
+    "google-auth-library": "^11.1.0"
+  }
+}
