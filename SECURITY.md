@@ -19,6 +19,11 @@ reporting contact will be added when the public repository is established.
 - Raw terminal output, source files, and conversation history are not collected.
 - Demo data is local-only and cannot be enabled on Vercel/production.
 - Secrets remain server-side or in the Mac user's private environment file.
+- Tailscale reporting is opt-in and includes only this machine's client state,
+  MagicDNS name, and Tailscale IPs. Those private addresses enter the owner's
+  hosted snapshot. Peer lists, account profiles, keys, and login URLs are discarded.
+  Tailscale membership and caller-supplied identity headers grant no Perch access.
+  This integration neither opens ports nor changes tailnet permissions.
 - Public static assets contain no user records. API responses are never cached.
 - The dashboard keeps snapshots in memory, not localStorage. Sign-out clears the
   displayed snapshot immediately and invalidates pending UI responses. A successful
@@ -70,13 +75,16 @@ and your chosen hosting/database providers still process requests.
 This is a source review with automated regression tests, not an independent
 penetration test or a security certification.
 
-- 28 local unit/API/storage tests pass: unauthorized requests never read storage,
+- 35 local unit/API/storage/collector tests pass: unauthorized requests never read storage,
   other Google identities cannot log in, agent tokens cannot read or write another
   machine, sessions/nonces cannot cross installation boundaries, and overlapping
-  machine IDs do not mix snapshots or history in a shared test store.
-- 14 browser checks pass, including a reproduced/fixed late-refresh-after-logout
+  machine IDs do not mix snapshots or history in a shared test store. Tailscale
+  tests check explicit opt-in, removal of unrelated device/account fields, CLI
+  failures, bounded input validation, and rejection of spoofed identity headers.
+- 15 browser checks pass, including a reproduced/fixed late-refresh-after-logout
   race, sign-out across tabs, session expiry, restored-page handling, and HTML
-  injection. Google and API authentication flows are stubbed in browser tests.
+  injection, plus Tailscale copy controls and stale/unavailable states. Google and
+  API authentication flows are stubbed in browser tests.
 - Dependency audit reported no known npm vulnerabilities at review time. This
   cannot establish that dependencies or application code have no vulnerabilities.
 - Hosted Google and Redis are not configured. The public deployment fails closed

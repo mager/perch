@@ -25,7 +25,7 @@ test('owner authorization requires verified authoritative email or pinned subjec
   assert.equal(isOwner({sub:'a'},{...cfg,ownerSub:'a'}),true);
 });
 test('unauthenticated and agent tokens cannot read status',async()=>{
-  for(const headers of [{},{authorization:`Bearer ${cfg.machines.mini.token}`},{cookie:'__Host-perch=forged'}]){const r=await request('machines',{headers});assert.equal(r.statusCode,401);assert.equal(r.reads,0);assert.equal(r.headers['Cache-Control'],'no-store, private');}
+  for(const headers of [{},{authorization:`Bearer ${cfg.machines.mini.token}`},{cookie:'__Host-perch=forged'},{'tailscale-user-login':cfg.ownerEmail,'tailscale-user-name':'Owner','x-forwarded-for':'100.64.0.10'}]){const r=await request('machines',{headers});assert.equal(r.statusCode,401);assert.equal(r.reads,0);assert.equal(r.headers['Cache-Control'],'no-store, private');}
 });
 test('owner cookie can read status, other owner cannot',async()=>{
   const user={...scopedClaims(cfg,'session'),sub:'owner',email:'owner@gmail.com',email_verified:true,exp:Date.now()+60000};

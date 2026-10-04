@@ -6,3 +6,5 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 
 .chart-frame{position:relative;padding-left:40px}.chart-axis{position:absolute;top:0;bottom:0;left:0;display:flex;flex-direction:column;justify-content:space-between;padding:3px 0 9px;font: .625rem var(--mono);color:var(--muted)}.foot a{display:inline-block;min-height:44px;padding:12px 0}.landing-footer>a:last-child{padding:12px 0}
+
+.tailscale{padding:28px 0;border-bottom:1px solid var(--line)}.tailscale .section-head{flex-wrap:wrap;margin-bottom:16px}.network-addresses{margin:0 0 16px}.network-addresses>div{padding:10px 0}.network-addresses dt{font-size:.6875rem;color:var(--muted)}.network-addresses dd{display:flex;align-items:center;gap:16px;margin:4px 0 0;min-width:0}.network-addresses code{font-family:var(--mono);font-size:.8125rem;overflow-wrap:anywhere;min-width:0;flex:1}.network-addresses button{flex:none}.network-note{font-size:.75rem;margin:8px 0 0}.network-note:empty{display:none}.network-guide{display:inline-block;min-height:44px;padding:12px 0;font-size:.8125rem}

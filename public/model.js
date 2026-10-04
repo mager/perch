@@ -26,6 +26,11 @@ export function uptime(value) {
 export function historyPoints(history) {
   return (Array.isArray(history) ? history : []).filter(p => isMetric(p?.receivedAt) && isMetric(p?.cpu) && p.cpu >= 0 && p.cpu <= 100).sort((a,b) => a.receivedAt - b.receivedAt);
 }
+export function tailscaleStatus(snapshot,now,interrupted=false){
+  const labels={running:'Running at last heartbeat',stopped:'Stopped at last heartbeat','needs-login':'Sign-in needed','needs-approval':'Device approval needed',starting:'Starting at last heartbeat',unavailable:'Status unavailable','not-installed':'Tailscale CLI not found',disabled:'Not enabled'};
+  if(freshness(snapshot,now)!=='fresh'||interrupted)return 'Current state unknown';
+  return labels[snapshot?.tailscale?.state]||'Not reported';
+}
 // Scenarios operate only on a server-confirmed local demo response.
 export function demoScenario(data, scenario) {
   if (!data.demo || scenario === 'normal' || scenario === 'error') return data.machines;
@@ -42,6 +47,7 @@ export function demoScenario(data, scenario) {
       machine.snapshot.disk = null;
       machine.snapshot.tmuxStatus = 'unavailable';
       machine.snapshot.sessions = [];
+      machine.snapshot.tailscale = {state:'unavailable',dnsName:null,ips:[]};
     }
   }
   return machines;

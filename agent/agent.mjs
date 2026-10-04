@@ -3,6 +3,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
+import { collectTailscale } from './tailscale.mjs';
 const exec=promisify(execFile);
 function cpuTimes(){return os.cpus().reduce((a,c)=>{a.idle+=c.times.idle;a.total+=Object.values(c.times).reduce((s,n)=>s+n,0);return a;},{idle:0,total:0});}
 export function parseSessions(output,panes){
@@ -21,7 +22,8 @@ export async function collect(env=process.env){
     sessions=parseSessions(stdout,panes);tmuxStatus='ok';
   }catch(error){if(/no server running|no sessions|error connecting.*No such file/i.test(error.stderr||'')){try{await exec(tmux,['-V'],{timeout:3000});tmuxStatus='ok';}catch{}}}
   const total=after.total-before.total;
-  return {sampledAt:Date.now(),platform:os.platform(),hostname:os.hostname(),uptime:os.uptime(),cpu:total?Math.round(1000*(1-(after.idle-before.idle)/total))/10:0,memoryTotal:os.totalmem(),memoryUsed:os.totalmem()-os.freemem(),disk,tmuxStatus,sessions};
+  const tailscale=await collectTailscale(env);
+  return {sampledAt:Date.now(),platform:os.platform(),hostname:os.hostname(),uptime:os.uptime(),cpu:total?Math.round(1000*(1-(after.idle-before.idle)/total))/10:0,memoryTotal:os.totalmem(),memoryUsed:os.totalmem()-os.freemem(),disk,tmuxStatus,sessions,tailscale};
 }
 export function agentConfig(env=process.env){
   const url=new URL(env.PERCH_URL||'');

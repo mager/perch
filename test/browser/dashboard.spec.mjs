@@ -66,6 +66,24 @@ test('machine and session text cannot inject HTML',async({page})=>{
   await expect(page.locator('img[src="x"]')).toHaveCount(0);
   await expect(page.getByText('<script>bad()</script>',{exact:true})).toBeVisible();
 });
+test('Tailscale addresses copy, age into unknown, and show unavailable states',async({page,context})=>{
+  const data=fixture();
+  await context.grantPermissions(['clipboard-read','clipboard-write']);
+  await page.clock.install();
+  data.machines[0].snapshot.receivedAt=data.serverTime-175000;
+  await page.route('**/api/machines',route=>json(route,data));
+  await page.goto('/app');
+  await expect(page.locator('#tailscale-status')).toHaveText('Running at last heartbeat');
+  await page.getByRole('button',{name:'Copy MagicDNS address'}).click();
+  expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe('studio-mini.example-tailnet.ts.net');
+  await expect(page.getByRole('status').filter({hasText:'Address copied.'})).toBeVisible();
+  await page.clock.fastForward(11000);
+  await expect(page.locator('#tailscale-status')).toHaveText('Current state unknown');
+  await expect(page.locator('#tailscale-freshness')).toContainText('may be out of date');
+  await page.getByLabel('Explore a state').selectOption('unavailable');
+  await expect(page.getByRole('button',{name:'Copy MagicDNS address'})).toHaveCount(0);
+  await expect(page.getByText('The agent could not read Tailscale status.',{exact:false})).toBeVisible();
+});
 for(const width of [390,768,1440]){
   test(`landing and dashboard layout at ${width}px`,async({page})=>{
     const errors=[];page.on('pageerror',error=>errors.push(error.message));

@@ -8,7 +8,9 @@ the owner's blog and from their Python/Pydantic Codex harness project.
 ## Current state
 
 Backend, collector, launchd installer, responsive dashboard, landing page, and brand
-assets exist. Local unit/API and browser tests cover the sample UI and authentication
+assets exist. Optional Tailscale reporting collects only the local machine's state
+and addresses, enabled with PERCH_TAILSCALE=1. It does not change authentication
+or make the Vercel portal tailnet-only. Local unit/API and browser tests cover the sample UI and authentication
 boundaries. Hosted Google sign-in, Redis, and launchd still require integration testing.
 The landing page and unconfigured app shell are deployed at
 `https://perch-mac-app.vercel.app`; live routes and the hero asset were checked.

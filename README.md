@@ -20,6 +20,7 @@ and storage are not configured. Use the local demo below for the interactive pre
 - Memory allocated (includes cache; this is not macOS Activity Monitor's pressure metric).
 - Root filesystem disk capacity and available space.
 - tmux session names, window counts, attached clients, and foreground `codex` pane counts.
+- Optional Tailscale client state, this machine's MagicDNS name, and private IPs.
 
 Perch does **not** read terminal output, files, prompts, credentials, or conversation
 history. A foreground Codex process does not tell us whether a task is working,
@@ -151,6 +152,51 @@ To remove it, stop it first and delete only
 `~/Library/LaunchAgents/dev.perch.agent.plist`. Remove the private agent config and
 rotate/remove its token from Vercel. To reinstall after a Node upgrade, unload and
 remove that plist before running the installer again.
+
+## Tailscale
+
+Perch can include Tailscale in the same owner-only snapshot. The dashboard shows
+the local client's last reported state and copyable MagicDNS, IPv4, and IPv6
+addresses. It labels old or interrupted snapshots as unknown, and does not infer
+that your browser can reach the Mac.
+
+1. Install and sign in to Tailscale on the monitored Mac using
+   [Tailscale's macOS guide](https://tailscale.com/docs/install/mac).
+2. Update the Perch checkout on that Mac and set `PERCH_TAILSCALE=1` in its private
+   agent environment file. This opts in to storing that machine's private addresses
+   in your hosted Redis snapshot. No Tailscale API key or admin token is needed.
+3. Restart the agent, or run the one-shot heartbeat above. The next snapshot
+   includes Tailscale. The collector tries `tailscale` in PATH and, on macOS, the
+   app's bundled CLI. Set `PERCH_TAILSCALE_PATH` for a custom executable location.
+4. From your laptop or phone, join the appropriate tailnet and follow its access
+   rules when using an address. Copying an address grants no access and starts no
+   remote command. Perch does not enable SSH, Serve, Funnel, or new network ports.
+
+The collector runs `tailscale status --json --peers=false` with a short timeout.
+Only state, `Self.DNSName`, and `Self.TailscaleIPs` are retained; peer devices,
+account profiles, keys, login URLs, and diagnostic text are discarded. The server
+validates the allowlist again. Missing or failed CLI access remains unavailable
+without blocking the rest of the heartbeat. Older agents remain compatible and
+show “Not reported.” The local demo includes clearly fictional Tailscale addresses.
+Set `PERCH_TAILSCALE=0` and restart the agent to stop collecting this information;
+the next successful heartbeat replaces its Tailscale fields with disabled status.
+
+This integration **does not make the Vercel portal tailnet-only**. Google owner
+authentication still protects every status read. Vercel receives HTTPS heartbeats
+without joining your tailnet, so the dashboard stays independent of the Mini.
+Perch never trusts incoming `Tailscale-User-*` headers on its public API.
+
+A future private hosting mode could put a separate, always-on Perch host behind
+[Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve). Serve makes
+a local service available within a tailnet; its identity headers are trustworthy
+only behind a properly isolated proxy. Hosting that portal on the monitored Mini
+would lose the outage visibility we want. A tailnet-only hosting/authentication
+mode is not implemented by the status integration.
+
+Implementation reference: [Tailscale CLI and macOS scripting](https://tailscale.com/docs/reference/tailscale-cli?tab=macos).
+The local collector was checked against an installed client without uploading its
+addresses. Hosted heartbeat ingestion, Google sign-in, and real tailnet access
+still need end-to-end verification.
 
 ## Cost and retention
 
