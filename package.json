@@ -13,10 +13,15 @@
     "demo": "PERCH_DEMO=1 node scripts/dev.mjs",
     "test": "node --test test/*.test.mjs",
     "agent": "node --env-file-if-exists=.env.agent agent/agent.mjs",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "test:ui": "playwright test"
   },
   "dependencies": {
     "@upstash/redis": "^1.39.0",
     "google-auth-library": "^11.1.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0"
   }
 }

@@ -7,16 +7,22 @@ the owner's blog and from their Python/Pydantic Codex harness project.
 
 ## Current state
 
-Backend, collector, launchd installer, and API tests exist. The dashboard and logo
-are unfinished. Do not describe the application as deployed or end-to-end verified.
-Google sign-in, hosted Redis, Vercel routing, and launchd require integration testing.
+Backend, collector, launchd installer, responsive dashboard, landing page, and brand
+assets exist. Local unit/API and browser tests cover the sample UI and authentication
+boundaries. Hosted Google sign-in, Redis, and launchd still require integration testing.
+The landing page and unconfigured app shell are deployed at
+`https://perch-khaki.vercel.app`; live routes and the hero asset were checked.
+Do not describe real machine monitoring as end-to-end verified.
 
 ## Commands
 
 - `npm ci`
 - `npm test`
 - `npm run check`
-- `npm run demo` exposes local sample data at `/api/machines` on port 8787.
+- `npm run demo` serves the landing page at `/`, sample dashboard at `/app`, and
+  sample API at `/api/machines` on port 8787.
+- `npm run test:ui` runs Playwright browser and accessibility checks. Install Chromium
+  first with `npx playwright install chromium`.
 
 Use Node.js 22. The remote Mac agent uses only Node built-ins.
 
@@ -31,6 +37,19 @@ Use Node.js 22. The remote Mac agent uses only Node built-ins.
 - Do not add remote execution or terminal capture to the monitoring agent implicitly.
 - Keep UI usable on phones, keyboard accessible, and respectful of reduced motion.
 
-The selected brand name is Perch. A bird/wing mark was proposed, but final brand
-direction has not been chosen. Keep the wordmark and identity separate from
-monitoring functionality so both can evolve.
+The selected brand is Perch: a perched bird, an Apple-inspired white canvas, bold
+centered typography, and restrained green status signals. The owner approved the
+bird-on-Mini hero artwork. Read PRODUCT.md and DESIGN.md for context. Keep the
+wordmark and identity independent of monitoring functionality. A menu bar companion
+is a future idea, not an implemented feature.
+
+## Running build log
+
+The owner requested one evolving blog post about Perch. When the sibling
+`../magerblog` checkout is available, its canonical draft is
+`src/content/blog/2026-10-04-perch.md`. Read that repository's instructions before
+editing it. After meaningful Perch milestones, update the current-state prose,
+`updatedDate`, and dated build log using verified results. Distinguish implemented,
+locally tested, deployed, and integration-verified work. Keep personal configuration,
+credentials, and real machine snapshots out of the post. Preserve its draft status
+unless publication is requested; do not publish or schedule updates automatically.

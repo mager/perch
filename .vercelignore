@@ -1,11 +1,7 @@
 node_modules/
-.vercel/
 .env*
 !.env.example
 !.env.agent.example
-*.log
-.DS_Store
-coverage/
-
 test-results/
 playwright-report/
+.git/

@@ -4,10 +4,14 @@ A private lookout for your Mac mini. Check whether it is reporting, see system
 resources and tmux sessions, and keep the last snapshot when the connection goes
 quiet. Self-hosted, MIT-licensed, and designed for one owner with up to ten machines.
 
-**Initial implementation: backend and agent.** The dashboard and brand assets are
-still in progress. Local API tests are included. Google sign-in, Upstash,
-Vercel deployment, and the launchd installer still need verification against a real
-deployment. No accounts, infrastructure, or agent services are created automatically.
+**Implemented:** landing page, responsive dashboard, SVG identity, backend, and Mac
+agent. Local unit/API tests and browser checks are included. The sample dashboard
+is usable now. Real Google sign-in, Upstash, and launchd still need end-to-end
+verification. Running the demo creates no accounts or agent services.
+
+The [project landing page](https://perch-khaki.vercel.app) is deployed on Vercel.
+Its dashboard currently shows setup guidance because hosted owner authentication
+and storage are not configured. Use the local demo below for the interactive preview.
 
 ## What it reports
 
@@ -45,10 +49,22 @@ npm test
 npm run check
 ```
 
-`npm run demo` starts a local-only sample-data API at
-`http://localhost:8787/api/machines`. The dashboard entry page is still in progress.
+`npm run demo` starts a local-only preview:
+
+- Landing page: `http://localhost:8787/`
+- Interactive sample dashboard: `http://localhost:8787/app`
+- Sample API: `http://localhost:8787/api/machines`
+
+The dashboard uses fictional machines. Switch machines or use **Explore a state**
+to inspect stale snapshots, first-heartbeat onboarding, unavailable metrics, and
+connection errors. It does not monitor the Mac running the demo.
 Demo mode refuses to run on Vercel or with `NODE_ENV=production`, and its heartbeat
 endpoint cannot ingest real machine information.
+
+For browser checks, run `npx playwright install chromium` once, then `npm run test:ui`.
+The tests cover desktop/tablet/mobile layouts, state changes, authentication expiry,
+HTML injection handling, and automated accessibility checks. Google sign-in is stubbed
+in browser tests; it is not a verified live integration.
 
 For authenticated development, copy `.env.example` to `.env.local`, configure the
 values below with `PERCH_ORIGIN=http://localhost:8787`, and run `npm run dev`.
@@ -157,6 +173,7 @@ without a separate permission and threat-model design.
 Contributions are welcome under the MIT license. Submit a focused issue or patch
 with the problem, behavior change, and relevant tests. The next milestones are
 verified hosted onboarding, agent packaging, and optional structured Codex events.
+A native Mac menu bar companion is a possible follow-up.
 
 ## References
 
