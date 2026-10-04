@@ -121,7 +121,16 @@ All status APIs return `Cache-Control: no-store, private`.
 
 ## Install the Mac agent
 
-On **the Mac being monitored**, clone your fork and copy `.env.agent.example` to a
+On **the Mac being monitored**, download the
+[Mac agent ZIP](https://perch-mac-app.vercel.app/downloads/perch-mac-agent.zip)
+or clone your fork. The ZIP includes the required agent modules, optional LaunchAgent
+installer, setup guide, example configuration, and MIT license. It requires Node.js
+22 and your own configured Perch server. It is source code, not a native `.app` or
+signed installer; downloading it installs nothing. See the
+[download setup guide](docs/mac-agent-download.md) and
+[SHA-256 checksum](https://perch-mac-app.vercel.app/downloads/perch-mac-agent.zip.sha256).
+
+Extracted ZIP users can follow its `README.md`. From either checkout, copy `.env.agent.example` to a
 private location such as `~/.config/perch/agent.env`. Set the deployed URL, machine
 ID, matching machine token, and optionally the absolute tmux path.
 
@@ -223,6 +232,10 @@ records yourself when no longer needed. See [SECURITY.md](SECURITY.md).
 ## Development and contributions
 
 Use `npm test` for API/auth/schema tests and `npm run check` for syntax checks.
+Maintainers can rebuild the source ZIP with `npm run package:agent` (Python 3
+required). `npm run check:agent` checks its exact contents against the source
+allowlist and imports the extracted runtime without collecting or sending data.
+CI runs this check; regenerate the download whenever a packaged file changes.
 Never commit `.env` files or real machine telemetry. Keep the dashboard useful on
 a phone, label stale data, and do not add terminal capture or remote execution
 without a separate permission and threat-model design.

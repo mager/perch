@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { createHandler } from '../src/handler.mjs';
 const handle=createHandler();
 const deployment=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
-const files={'/':['index.html','text/html'],'/app':['app.html','text/html'],'/app.js':['app.js','text/javascript'],'/model.js':['model.js','text/javascript'],'/landing.css':['landing.css','text/css'],'/perch-hero.png':['perch-hero.png','image/png'],'/favicon.svg':['favicon.svg','image/svg+xml'],'/wordmark.svg':['wordmark.svg','image/svg+xml'],'/style.css':['style.css','text/css'],'/logo.svg':['logo.svg','image/svg+xml'],'/brand.html':['brand.html','text/html']};
+const files={'/downloads/perch-mac-agent.zip':['downloads/perch-mac-agent.zip','application/zip'],'/downloads/perch-mac-agent.zip.sha256':['downloads/perch-mac-agent.zip.sha256','text/plain'],'/':['index.html','text/html'],'/app':['app.html','text/html'],'/app.js':['app.js','text/javascript'],'/model.js':['model.js','text/javascript'],'/landing.css':['landing.css','text/css'],'/perch-hero.png':['perch-hero.png','image/png'],'/favicon.svg':['favicon.svg','image/svg+xml'],'/wordmark.svg':['wordmark.svg','image/svg+xml'],'/style.css':['style.css','text/css'],'/logo.svg':['logo.svg','image/svg+xml'],'/brand.html':['brand.html','text/html']};
 createServer(async(req,res)=>{
   for(const {key,value} of deployment.headers[0].headers)res.setHeader(key,value);
   res.setHeader('Referrer-Policy','no-referrer-when-downgrade');

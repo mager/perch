@@ -1,8 +1,28 @@
 import AxeBuilder from '@axe-core/playwright';
 import {test,expect} from '@playwright/test';
 import {demoMachines} from '../../src/demo.mjs';
+import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 const fixture=()=>({demo:true,serverTime:Date.now(),machines:demoMachines()});
 async function json(route,data,status=200){await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});}
+
+test('landing downloads a real agent ZIP with accurate prerequisites and checksum',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('link',{name:'Download Mac agent',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Perch for your Mac.'})).toBeVisible();
+  await expect(page.getByText('Source ZIP · Node.js 22 required · Apple silicon & Intel')).toBeVisible();
+  await expect(page.getByText('A native menu bar app is not available yet.',{exact:false})).toBeVisible();
+  const downloadEvent=page.waitForEvent('download');
+  await page.getByRole('link',{name:'Download Mac agent (ZIP)',exact:false}).click();
+  const download=await downloadEvent;
+  expect(download.suggestedFilename()).toBe('perch-mac-agent.zip');
+  expect(await download.failure()).toBeNull();
+  const bytes=await readFile(await download.path());
+  expect(bytes.subarray(0,4).toString('hex')).toBe('504b0304');
+  const checksum=await page.request.get('/downloads/perch-mac-agent.zip.sha256');
+  expect(checksum.ok()).toBe(true);
+  expect((await checksum.text()).split(' ')[0]).toBe(createHash('sha256').update(bytes).digest('hex'));
+});
 
 test('sample dashboard, switching machines, and every sample state',async({page})=>{
   await page.goto('/app');

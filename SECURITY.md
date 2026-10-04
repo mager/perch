@@ -81,10 +81,15 @@ penetration test or a security certification.
   machine IDs do not mix snapshots or history in a shared test store. Tailscale
   tests check explicit opt-in, removal of unrelated device/account fields, CLI
   failures, bounded input validation, and rejection of spoofed identity headers.
-- 15 browser checks pass, including a reproduced/fixed late-refresh-after-logout
+- 16 browser checks pass, including a reproduced/fixed late-refresh-after-logout
   race, sign-out across tabs, session expiry, restored-page handling, and HTML
   injection, plus Tailscale copy controls and stale/unavailable states. Google and
   API authentication flows are stubbed in browser tests.
+- The downloadable agent ZIP is built from an explicit file allowlist. CI checks
+  source/archive parity and imports the extracted runtime without executing the
+  collector or installer. Browser checks verify the download and its SHA-256 hash.
+  This source archive is not an Apple-signed or notarized application; the checksum
+  verifies integrity against the published file, not independent authenticity.
 - Dependency audit reported no known npm vulnerabilities at review time. This
   cannot establish that dependencies or application code have no vulnerabilities.
 - Hosted Google and Redis are not configured. The public deployment fails closed

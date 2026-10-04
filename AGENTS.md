@@ -21,6 +21,9 @@ Do not describe real machine monitoring as end-to-end verified.
 - `npm ci`
 - `npm test`
 - `npm run check`
+- `npm run package:agent` rebuilds the public agent source ZIP (Python 3 required
+  for maintainer packaging only). Run it after changing any packaged file.
+- `npm run check:agent` verifies source/archive parity and extracted runtime imports.
 - `npm run demo` serves the landing page at `/`, sample dashboard at `/app`, and
   sample API at `/api/machines` on port 8787.
 - `npm run test:ui` runs Playwright browser and accessibility checks. Install Chromium
@@ -44,6 +47,8 @@ centered typography, and restrained green status signals. The owner approved the
 bird-on-Mini hero artwork. Read PRODUCT.md and DESIGN.md for context. Keep the
 wordmark and identity independent of monitoring functionality. A menu bar companion
 is a future idea, not an implemented feature.
+The homepage has a Mac agent ZIP download, requiring Node.js 22 and a configured
+server. Do not describe this source archive as a native app or signed installer.
 
 ## Running build log
 
