@@ -15,69 +15,76 @@ struct ConnectionView: View {
     @State private var showAdvanced = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                HStack(alignment: .center, spacing: 16) {
-                    Image(nsImage: Bird.image(size: 64)).foregroundStyle(perchGreen).accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Your Mini. Within reach.").font(.system(size: 26, weight: .semibold)).tracking(-0.7)
-                        Text("A little bird looking out for this Mac.").foregroundStyle(.secondary)
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 12) {
+                    Image(nsImage: Bird.image(size: 42)).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Perch").font(.system(size: 24, weight: .semibold)).tracking(-0.5)
+                        Text("Your Mini. Within reach.").font(.callout).foregroundStyle(.secondary)
                     }
-                }
-                if state.preview { Label("Preview only. Nothing is collected or sent.", systemImage: "eye").font(.callout).foregroundStyle(perchGreen) }
-                Text("Connect this Mac to your own Perch server. The bird stays in your menu bar and sends a heartbeat every minute while reporting is on.")
-                    .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                VStack(alignment: .leading, spacing: 16) {
-                    field("Your Perch server", hint: "Your own deployment, not the project’s public landing page.") {
-                        TextField("https://your-perch.vercel.app", text: $origin)
-                    }
-                    field("Machine ID", hint: "Use the ID you added to your server’s machine configuration.") {
-                        TextField("studio-mini", text: $machineID)
-                    }
-                    field("Machine token", hint: "Stored in this Mac’s Keychain. Never synced or included in the dashboard link.") {
-                        SecureField(state.configuration == nil ? "Paste your machine’s write-only token" : "Leave empty to keep the saved token", text: $token)
-                    }
-                }.textFieldStyle(.roundedBorder)
-                DisclosureGroup("Optional metadata", isExpanded: $showAdvanced) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Toggle("Include tmux session names and process counts", isOn: $tmux)
-                        Text("Session names can be sensitive. Perch never reads terminal output or infers task progress.").font(.caption).foregroundStyle(.secondary)
-                        Toggle("Include this Mac’s Tailscale name and addresses", isOn: $tailscale)
-                        Text("Only this device, never your peer list. These private addresses will be stored on your server.").font(.caption).foregroundStyle(.secondary)
-                    }.padding(.top, 10)
-                }
-                Divider()
-                Label("Sends hostname, CPU, allocated memory, disk space, and uptime to the server above.", systemImage: "lock.shield")
-                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                if let message = state.setupMessage {
-                    Label(message, systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
-                }
-                HStack {
-                    Link("Server setup guide ↗", destination: URL(string: "https://github.com/mager/perch#deploy-on-vercel")!)
-                    Spacer()
+                    Spacer(minLength: 16)
                     Button("Connect this Mac") {
                         if state.connect(origin: origin, machineID: machineID, token: token, tmux: tmux, tailscale: tailscale) {
                             token = ""; connected()
                         }
-                    }.buttonStyle(.borderedProminent).controlSize(.large).disabled(state.preview)
-                }
-                Text("Already using the Terminal agent? Stop it before connecting here to avoid duplicate heartbeats.")
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                if state.configuration != nil {
-                    Divider()
-                    Toggle("Open Perch at login", isOn: Binding(get: { state.loginStatus == .enabled }, set: state.setLogin))
-                        .disabled(state.preview)
-                    if state.loginStatus == .requiresApproval {
-                        Button("Review Login Items in System Settings") { SMAppService.openSystemSettingsLoginItems() }
                     }
-                    Text("Perch runs while you’re logged in. Sleep, logout, or quitting stops heartbeats; the dashboard then shows an aging snapshot.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Button("Disconnect and remove this Mac’s saved token", role: .destructive) { state.disconnect(); token = "" }
-                        .disabled(state.preview)
+                    .buttonStyle(.borderedProminent).controlSize(.large)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .disabled(state.preview)
                 }
-            }.padding(32)
+                if let message = state.setupMessage {
+                    Label(message, systemImage: "exclamationmark.circle")
+                        .font(.callout).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                }
+            }.padding(24)
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    if state.preview { Label("Preview only. Nothing is collected or sent.", systemImage: "eye").font(.callout).foregroundStyle(perchGreen) }
+                    Text("Connect to your own Perch server. The bird stays in your menu bar and sends a heartbeat every minute while reporting is on.")
+                        .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 16) {
+                        field("Your Perch server", hint: "Your own deployment, not the project’s public landing page.") {
+                            TextField("https://your-perch.vercel.app", text: $origin)
+                        }
+                        field("Machine ID", hint: "Use the ID you added to your server’s machine configuration.") {
+                            TextField("studio-mini", text: $machineID)
+                        }
+                        field("Machine token", hint: "Stored in this Mac’s Keychain. Never synced or included in the dashboard link.") {
+                            SecureField(state.configuration == nil ? "Paste your machine’s write-only token" : "Leave empty to keep the saved token", text: $token)
+                        }
+                    }.textFieldStyle(.roundedBorder)
+                    DisclosureGroup("Optional metadata", isExpanded: $showAdvanced) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Toggle("Include tmux session names and process counts", isOn: $tmux)
+                            Text("Session names can be sensitive. Perch never reads terminal output or infers task progress.").font(.caption).foregroundStyle(.secondary)
+                            Toggle("Include this Mac’s Tailscale name and addresses", isOn: $tailscale)
+                            Text("Only this device, never your peer list. These private addresses will be stored on your server.").font(.caption).foregroundStyle(.secondary)
+                        }.padding(.top, 10)
+                    }
+                    Divider()
+                    Label("Sends hostname, CPU, allocated memory, disk space, and uptime to the server above.", systemImage: "lock.shield")
+                        .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    Link("Server setup guide ↗", destination: URL(string: "https://github.com/mager/perch#deploy-on-vercel")!)
+                    Text("Already using the Terminal agent? Stop it before connecting here to avoid duplicate heartbeats.")
+                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    if state.configuration != nil {
+                        Divider()
+                        Toggle("Open Perch at login", isOn: Binding(get: { state.loginStatus == .enabled }, set: state.setLogin))
+                            .disabled(state.preview)
+                        if state.loginStatus == .requiresApproval {
+                            Button("Review Login Items in System Settings") { SMAppService.openSystemSettingsLoginItems() }
+                        }
+                        Text("Perch runs while you’re logged in. Sleep, logout, or quitting stops heartbeats; the dashboard then shows an aging snapshot.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Button("Disconnect and remove this Mac’s saved token", role: .destructive) { state.disconnect(); token = "" }
+                            .disabled(state.preview)
+                    }
+                }.padding(24)
+            }
         }
-        .frame(width: 540, height: 700)
+        .frame(width: 540, height: 660)
         .background(Color(nsColor: .windowBackgroundColor))
         .tint(perchGreen)
         .onAppear {

@@ -53,8 +53,8 @@ bird-on-Mini hero artwork. Read PRODUCT.md and DESIGN.md for context. Keep the
 wordmark and identity independent of monitoring functionality. A native SwiftUI/AppKit menu bar app now exists in `macos/`, with Keychain tokens
 and a universal developer-preview DMG. Developer ID signing, notarization, login-item
 relaunch, and real hosted heartbeat integration still need verification.
-The homepage has a Mac agent ZIP download, requiring Node.js 22 and a configured
-server. Do not describe this source archive as a native app or signed installer. The native
+The homepage links a GitHub developer-preview DMG prerelease and a separate
+Terminal agent ZIP requiring Node.js 22 and a configured server. Do not describe this source archive as a native app or signed installer. The native
 app is separate; do not promote a developer DMG as a signed public release.
 
 ## Running build log

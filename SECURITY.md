@@ -131,6 +131,7 @@ for the same machine. The app does not terminate other agents automatically.
 
 The developer app/DMG is ad-hoc signed, not Developer ID signed or notarized.
 The release script requires signing credentials and Apple notarization. A valid
-DMG checksum is not independent authenticity. Public download, signed-update
+DMG checksum is not independent authenticity. GitHub prereleases distribute this
+developer preview with explicit signing limitations. Signed public distribution, signed-update
 Keychain behavior, login-item relaunch, and real owner-authenticated cloud
 interruption/recovery are release acceptance tasks, not completed integrations.

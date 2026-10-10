@@ -4,11 +4,19 @@ A native SwiftUI/AppKit menu bar companion for macOS 13 or later, on Apple silic
 and Intel. It collects and sends heartbeats itself; Node.js is not required.
 The hosted portal remains independent of this app and this Mac.
 
+## Download the developer preview
+
+[Download the DMG](https://github.com/mager/perch/releases/download/v0.2.0-preview.1/Perch-0.2.0-developer-preview.dmg) from the
+[GitHub prerelease](https://github.com/mager/perch/releases/tag/v0.2.0-preview.1), which also
+includes its SHA-256 checksum. Requires macOS 13+ on Apple silicon or Intel.
+This preview is ad-hoc signed, **not Developer ID signed or notarized**; macOS may
+block it from opening. A signed installation experience is still pending.
+
 ## First connection
 
 Open `Perch.app`. The bird appears in your menu bar and opens a connection window.
 Enter your own server's HTTPS origin, the machine ID configured on that server,
-and its matching write-only machine token. Choose **Connect this Mac** to start
+and its matching write-only machine token. Choose **Connect this Mac** in the fixed top bar to start
 collecting and sending. There is no automatic connection to the public Perch site.
 The app does not create a server, Google OAuth client, or Redis account for you.
 

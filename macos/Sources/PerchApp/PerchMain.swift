@@ -49,7 +49,7 @@ import PerchCore
         popover.performClose(nil)
         state.loginStatus = SMAppService.mainApp.status
         if let window, window.isVisible { window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 700), styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 660), styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
         window.title = "Perch · Connect this Mac"
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(rootView: ConnectionView(state: state, connected: { [weak self] in

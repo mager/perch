@@ -49,6 +49,7 @@ replace real-device and assistive-technology testing.
 
 The same bird is a monochrome template in the menu bar, adapting to macOS light
 and dark appearance. Native SwiftUI controls, system typography, restrained green
-actions, and a scrollable connection window. The menu distinguishes local samples
+actions, and a scrollable connection window. The bird and primary connection action
+stay in a fixed header; validation feedback appears beside that action. The menu distinguishes local samples
 from server receipts and unknown current state. No animation or inferred task
 status. First launch sends nothing; optional metadata starts off.
