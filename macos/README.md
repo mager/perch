@@ -6,8 +6,8 @@ The hosted portal remains independent of this app and this Mac.
 
 ## Download the developer preview
 
-[Download the DMG](https://github.com/mager/perch/releases/download/v0.2.0-preview.1/Perch-0.2.0-developer-preview.dmg) from the
-[GitHub prerelease](https://github.com/mager/perch/releases/tag/v0.2.0-preview.1), which also
+[Download the DMG](https://github.com/mager/perch/releases/download/v0.2.1-preview.1/Perch-0.2.1-developer-preview.dmg) from the
+[GitHub prerelease](https://github.com/mager/perch/releases/tag/v0.2.1-preview.1), which also
 includes its SHA-256 checksum. Requires macOS 13+ on Apple silicon or Intel.
 This preview is ad-hoc signed, **not Developer ID signed or notarized**; macOS may
 block it from opening. A signed installation experience is still pending.
@@ -57,7 +57,7 @@ macos/scripts/package.sh --development
 ```
 
 The packaging script builds both architectures and writes an ad-hoc-signed
-`macos/dist/Perch.app`, `Perch-0.2.0-developer-preview.dmg`, and a SHA-256 file.
+`macos/dist/Perch.app`, `Perch-0.2.1-developer-preview.dmg`, and a SHA-256 file.
 Move an earlier `macos/dist/Perch.app` aside before packaging again. Generated
 binaries are ignored by Git. The DMG contains the app, an Applications shortcut,
 and installation notes. CI builds and retains the developer DMG as an artifact.

@@ -131,7 +131,7 @@ Tailscale addresses are separate opt-ins, off by default.
 
 The developer build targets macOS 13+ on Apple silicon and Intel and packages as
 an `.app` inside a DMG. **Public Developer ID signing and notarization are still
-pending.** The [developer-preview DMG](https://github.com/mager/perch/releases/tag/v0.2.0-preview.1) is available
+pending.** The [developer-preview DMG](https://github.com/mager/perch/releases/tag/v0.2.1-preview.1) is available
 as a GitHub prerelease. See [Mac app setup, builds, and release instructions](macos/README.md).
 The existing Terminal agent ZIP remains a separate option below. Stop an earlier
 agent before connecting the native app so both don't send heartbeats.

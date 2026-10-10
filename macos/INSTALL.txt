@@ -1,4 +1,4 @@
-Perch for Mac · 0.2.0 developer preview
+Perch for Mac · 0.2.1 developer preview
 
 1. Drag Perch.app into Applications.
 2. Open Perch. A small bird appears in your menu bar.

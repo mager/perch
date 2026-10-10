@@ -12,7 +12,7 @@ test('landing downloads a real agent ZIP with accurate prerequisites and checksu
   await expect(page.getByRole('heading',{name:'Perch for your Mac.'})).toBeVisible();
   await expect(page.getByText('Source ZIP · Node.js 22 required · Apple silicon & Intel')).toBeVisible();
   await expect(page.getByText('This ZIP contains source files, not the native Mac app.',{exact:false})).toBeVisible();
-  await expect(page.getByRole('link',{name:'Download Mac app (DMG)',exact:false})).toHaveAttribute('href','https://github.com/mager/perch/releases/download/v0.2.0-preview.1/Perch-0.2.0-developer-preview.dmg');
+  await expect(page.getByRole('link',{name:'Download Mac app (DMG)',exact:false})).toHaveAttribute('href','https://github.com/mager/perch/releases/download/v0.2.1-preview.1/Perch-0.2.1-developer-preview.dmg');
   await expect(page.getByText('Not yet Developer ID signed or notarized by Apple.',{exact:false})).toBeVisible();
   const downloadEvent=page.waitForEvent('download');
   await page.getByRole('link',{name:'Download Mac agent (ZIP)',exact:false}).click();

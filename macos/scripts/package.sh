@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="$ROOT/macos/dist"
-VERSION=0.2.0
+VERSION=0.2.1
 MODE="${1:---development}"
 if [[ "$MODE" != --development && "$MODE" != --release ]]; then
   echo 'Usage: macos/scripts/package.sh [--development|--release]' >&2; exit 1
@@ -33,7 +33,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <key>CFBundleExecutable</key><string>Perch</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>$VERSION</string>
-<key>CFBundleVersion</key><string>2</string>
+<key>CFBundleVersion</key><string>3</string>
 <key>CFBundleIconFile</key><string>Perch</string>
 <key>LSMinimumSystemVersion</key><string>13.0</string>
 <key>LSUIElement</key><true/>
@@ -72,7 +72,7 @@ if [[ "$MODE" == --release ]]; then
 from pathlib import Path
 import sys
 p = Path(sys.argv[1])
-s = p.read_text().replace('0.2.0 developer preview', '0.2.0')
+s = p.read_text().replace('0.2.1 developer preview', '0.2.1')
 s = s.replace('This development build is NOT Developer ID signed or notarized by Apple.\nIt is for local evaluation. Normal public distribution is pending Apple signing\nand notarization; do not disable Gatekeeper to use an untrusted download.',
               'This release is Developer ID signed and notarized by Apple.')
 p.write_text(s)

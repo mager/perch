@@ -7,6 +7,8 @@ import PerchCore
     private let popover = NSPopover()
     private var window: NSWindow?
     private var state: AppState!
+    private var presentationRevision = 0
+    private var openingPopover = false
     func applicationDidFinishLaunching(_ notification: Notification) {
         let menu = NSMenu()
         let appMenuItem = NSMenuItem(); menu.addItem(appMenuItem)
@@ -34,26 +36,38 @@ import PerchCore
         if state.configuration == nil { showSettings() }
     }
     @objc private func togglePopover() {
+        presentationRevision += 1
+        let revision = presentationRevision
+        openingPopover = false
         if popover.isShown { popover.performClose(nil) }
         else {
+            // Keep the draft alive, but show only one Perch surface at a time.
+            window?.orderOut(nil)
+            openingPopover = true
             NSApp.activate(ignoringOtherApps: true)
             // Defer until a menu command has finished tracking, then focus the panel.
             DispatchQueue.main.async { [weak self] in
-                guard let self, let button = self.item.button else { return }
+                guard let self, self.presentationRevision == revision, let button = self.item.button else { return }
+                self.openingPopover = false
                 self.popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 self.popover.contentViewController?.view.window?.makeKey()
             }
         }
     }
     @objc private func showSettings() {
+        presentationRevision += 1
+        openingPopover = false
         popover.performClose(nil)
         state.loginStatus = SMAppService.mainApp.status
-        if let window, window.isVisible { window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+        if let window {
+            if window.isMiniaturized { window.deminiaturize(nil) }
+            window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return
+        }
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 660), styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
         window.title = "Perch · Connect this Mac"
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(rootView: ConnectionView(state: state, connected: { [weak self] in
-            self?.window?.close(); self?.togglePopover()
+            self?.window?.close(); self?.window = nil; self?.togglePopover()
         }))
         window.center(); window.makeKeyAndOrderFront(nil)
         self.window = window
@@ -61,7 +75,10 @@ import PerchCore
     }
     @objc private func woke() { state.monitor.sendNow() }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !popover.isShown { showSettings() }
+        if !popover.isShown && !openingPopover {
+            if state.configuration == nil || window?.isVisible == true { showSettings() }
+            else { togglePopover() }
+        }
         return true
     }
     func applicationWillTerminate(_ notification: Notification) { state.monitor.pause() }
