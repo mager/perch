@@ -26,15 +26,24 @@ import PerchCore
         item.button?.target = self; item.button?.action = #selector(togglePopover)
         popover.behavior = .transient
         let panel = NSHostingController(rootView: MenuPanel(state: state, monitor: state.monitor, settings: { [weak self] in self?.showSettings() }, quit: { NSApp.terminate(nil) }))
-        panel.preferredContentSize = NSSize(width: 360, height: 440)
+        panel.sizingOptions = [.preferredContentSize]
         popover.contentViewController = panel
-        popover.contentSize = panel.preferredContentSize
+        popover.contentSize = panel.view.fittingSize
+        popover.animates = false
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(woke), name: NSWorkspace.didWakeNotification, object: nil)
         if state.configuration == nil { showSettings() }
     }
     @objc private func togglePopover() {
         if popover.isShown { popover.performClose(nil) }
-        else if let button = item.button { popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY); NSApp.activate(ignoringOtherApps: true) }
+        else {
+            NSApp.activate(ignoringOtherApps: true)
+            // Defer until a menu command has finished tracking, then focus the panel.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, let button = self.item.button else { return }
+                self.popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                self.popover.contentViewController?.view.window?.makeKey()
+            }
+        }
     }
     @objc private func showSettings() {
         popover.performClose(nil)
@@ -51,7 +60,10 @@ import PerchCore
         NSApp.activate(ignoringOtherApps: true)
     }
     @objc private func woke() { state.monitor.sendNow() }
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showSettings(); return true }
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !popover.isShown { showSettings() }
+        return true
+    }
     func applicationWillTerminate(_ notification: Notification) { state.monitor.pause() }
 }
 
