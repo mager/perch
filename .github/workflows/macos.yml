@@ -1,0 +1,25 @@
+name: Mac app
+on:
+  push:
+    paths: ['macos/**', '.github/workflows/macos.yml', 'src/schema.mjs', 'src/tailscale.mjs']
+  pull_request:
+    paths: ['macos/**', '.github/workflows/macos.yml', 'src/schema.mjs', 'src/tailscale.mjs']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native tests
+        run: swift test --package-path macos
+      - name: Build developer-preview app and DMG
+        run: macos/scripts/package.sh --development
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Perch-mac-developer-preview
+          path: |
+            macos/dist/*.dmg
+            macos/dist/*.sha256
+          retention-days: 14

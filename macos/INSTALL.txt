@@ -1,0 +1,32 @@
+Perch for Mac · 0.2.0 developer preview
+
+1. Drag Perch.app into Applications.
+2. Open Perch. A small bird appears in your menu bar.
+3. Set up your own Perch server, then enter its HTTPS address, your machine ID,
+   and the matching write-only machine token in Perch's connection screen.
+4. Choose Connect this Mac. Confirm that the server accepts the heartbeat.
+
+No Node.js, Terminal command, or administrator password is needed to run the app.
+The server still requires your Google owner configuration and Upstash Redis.
+Setup: https://github.com/mager/perch#deploy-on-vercel
+
+This development build is NOT Developer ID signed or notarized by Apple.
+It is for local evaluation. Normal public distribution is pending Apple signing
+and notarization; do not disable Gatekeeper to use an untrusted download.
+
+Nothing is collected or sent until you choose Connect this Mac. Credentials are
+stored in this Mac's Keychain, not synced. Optional tmux and Tailscale metadata
+are off by default. This app sends heartbeats only; dashboard reads still require
+owner authentication in your browser. There is no remote command execution.
+
+Stop any earlier Perch Terminal agent or LaunchAgent before connecting the app;
+otherwise both agents can send snapshots for the same machine.
+
+Pause stops new heartbeats. A request already sent may still reach the server.
+Quit, sleep, or logout also interrupts reporting. The hosted dashboard retains
+its last snapshot and labels its age; missing heartbeats mean unknown state.
+Open at login is optional in Settings after moving the app to Applications.
+
+To remove: turn off Open at login, disconnect in Settings to remove the Keychain
+token, quit Perch, and move Perch.app to the Trash. Removing the app does not erase
+snapshots already held on your server. Rotate the server's machine token if needed.
