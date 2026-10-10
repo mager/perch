@@ -135,3 +135,14 @@ DMG checksum is not independent authenticity. GitHub prereleases distribute this
 developer preview with explicit signing limitations. Signed public distribution, signed-update
 Keychain behavior, login-item relaunch, and real owner-authenticated cloud
 interruption/recovery are release acceptance tasks, not completed integrations.
+
+## Hosted configuration check — October 10, 2026
+
+Production Google client, owner, machine token, and Vercel Redis integration
+variables are configured. The public configuration endpoint returns login metadata
+with no-store caching. Live requests without a session, with a forged session, or
+with only a machine write token return 401 on status reads. The configured machine
+token is rejected for another machine; a matching token with an invalid payload
+reaches validation and returns 400 without writing a snapshot. These checks do
+not verify successful Google owner sign-in, real Redis reads/writes, or a real
+heartbeat. Earlier unconfigured-deployment observations above are historical.
