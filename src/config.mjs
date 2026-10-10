@@ -2,7 +2,11 @@ export function config(env = process.env) {
   const demo = env.PERCH_DEMO === '1';
   if (demo && (env.VERCEL || env.NODE_ENV === 'production')) throw new Error('Demo mode is local-only.');
   if (demo) return { demo:true, origin:'http://localhost:8787', machines:{} };
-  for (const key of ['PERCH_ORIGIN','GOOGLE_CLIENT_ID','SESSION_SECRET','PERCH_MACHINES','UPSTASH_REDIS_REST_URL','UPSTASH_REDIS_REST_TOKEN']) {
+  // Choose a complete naming scheme; never mix credentials from two databases.
+  const redisKeys = env.UPSTASH_REDIS_REST_URL || env.UPSTASH_REDIS_REST_TOKEN
+    ? ['UPSTASH_REDIS_REST_URL','UPSTASH_REDIS_REST_TOKEN']
+    : ['KV_REST_API_URL','KV_REST_API_TOKEN'];
+  for (const key of ['PERCH_ORIGIN','GOOGLE_CLIENT_ID','SESSION_SECRET','PERCH_MACHINES',...redisKeys]) {
     if (!env[key]) throw new Error(`Missing ${key}`);
   }
   const origin = new URL(env.PERCH_ORIGIN);
@@ -16,5 +20,5 @@ export function config(env = process.env) {
     if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(id) || typeof machine?.name !== 'string' || !machine.name.trim() || machine.name.length > 80 || typeof machine.token !== 'string' || machine.token.length < 32 || tokens.has(machine.token) || machine.token === env.SESSION_SECRET) throw new Error('Machines need valid IDs, names, and distinct random tokens.');
     tokens.add(machine.token);
   }
-  return { demo:false, origin:origin.origin, clientId:env.GOOGLE_CLIENT_ID, secret:env.SESSION_SECRET, ownerEmail:env.OWNER_EMAIL?.toLowerCase(), ownerSub:env.OWNER_GOOGLE_SUB, machines, redisUrl:env.UPSTASH_REDIS_REST_URL, redisToken:env.UPSTASH_REDIS_REST_TOKEN };
+  return { demo:false, origin:origin.origin, clientId:env.GOOGLE_CLIENT_ID, secret:env.SESSION_SECRET, ownerEmail:env.OWNER_EMAIL?.toLowerCase(), ownerSub:env.OWNER_GOOGLE_SUB, machines, redisUrl:env[redisKeys[0]], redisToken:env[redisKeys[1]] };
 }

@@ -81,7 +81,10 @@ values below with `PERCH_ORIGIN=http://localhost:8787`, and run `npm run dev`.
    directory `public`, and no build command. `vercel.json` supplies API routing.
 2. Create an Upstash Redis database and set `UPSTASH_REDIS_REST_URL` and
    `UPSTASH_REDIS_REST_TOKEN` as server environment variables. Use the free plan
-   explicitly; paid plans have different billing rules.
+   explicitly; paid plans have different billing rules. The Vercel Marketplace
+   integration’s paired `KV_REST_API_URL` and `KV_REST_API_TOKEN` variables also
+   work directly. You do not need to copy them into alternate names. If either
+   `UPSTASH_REDIS_REST_*` variable is set, both are required and take precedence.
 3. In Google Cloud, configure Google Auth Platform and create a **Web application**
    OAuth client. Set its authorized JavaScript origin to your final HTTPS Vercel
    origin. Add yourself as a test user if the consent application is in testing.

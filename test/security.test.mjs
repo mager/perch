@@ -17,6 +17,17 @@ async function request(action,{method='GET',headers={},body,getConfig=()=>cfg,ve
 test('demo can never enable on Vercel or production',()=>{
   assert.throws(()=>config({PERCH_DEMO:'1',VERCEL:'1'}));assert.throws(()=>config({PERCH_DEMO:'1',NODE_ENV:'production'}));assert.equal(config({PERCH_DEMO:'1'}).demo,true);
 });
+test('Redis accepts Vercel integration names without mixing credential pairs',()=>{
+  const base={PERCH_ORIGIN:cfg.origin,GOOGLE_CLIENT_ID:cfg.clientId,SESSION_SECRET:cfg.secret,OWNER_EMAIL:cfg.ownerEmail,PERCH_MACHINES:JSON.stringify(cfg.machines)};
+  const kv={KV_REST_API_URL:'https://kv.example',KV_REST_API_TOKEN:'kv-write'};
+  const direct={UPSTASH_REDIS_REST_URL:'https://direct.example',UPSTASH_REDIS_REST_TOKEN:'direct-write'};
+  for(const [vars,url,token] of [[kv,kv.KV_REST_API_URL,kv.KV_REST_API_TOKEN],[direct,direct.UPSTASH_REDIS_REST_URL,direct.UPSTASH_REDIS_REST_TOKEN],[{...kv,...direct},direct.UPSTASH_REDIS_REST_URL,direct.UPSTASH_REDIS_REST_TOKEN]]){
+    const result=config({...base,...vars});assert.equal(result.redisUrl,url);assert.equal(result.redisToken,token);
+  }
+  assert.throws(()=>config({...base,...kv,UPSTASH_REDIS_REST_URL:direct.UPSTASH_REDIS_REST_URL}));
+  assert.throws(()=>config({...base,...kv,UPSTASH_REDIS_REST_TOKEN:direct.UPSTASH_REDIS_REST_TOKEN}));
+  assert.throws(()=>config({...base,KV_REST_API_URL:kv.KV_REST_API_URL,KV_REST_API_READ_ONLY_TOKEN:'read-only'}));
+});
 test('sessions reject tampering and expiration',()=>{const token=sign({exp:Date.now()+60000},cfg.secret);assert.ok(verify(token,cfg.secret));assert.equal(verify(token+'x',cfg.secret),null);assert.equal(verify(sign({exp:1},cfg.secret),cfg.secret),null);});
 test('owner authorization requires verified authoritative email or pinned subject',()=>{
   assert.equal(isOwner({sub:'a',email:'owner@gmail.com',email_verified:false},cfg),false);
