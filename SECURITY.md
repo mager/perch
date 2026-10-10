@@ -146,3 +146,18 @@ token is rejected for another machine; a matching token with an invalid payload
 reaches validation and returns 400 without writing a snapshot. These checks do
 not verify successful Google owner sign-in, real Redis reads/writes, or a real
 heartbeat. Earlier unconfigured-deployment observations above are historical.
+
+## Real monitoring check — October 10, 2026
+
+An owner-signed-in browser successfully read a real Mac snapshot through hosted
+Redis. The Node.js agent ran with a private configuration file and a dedicated
+Node.js 22 runtime, then started as a user LaunchAgent. Optional tmux/Tailscale
+metadata was not collected for this check. Stopping the agent for more than three
+minutes left the previous resource snapshot visible with “Heartbeat overdue” and
+“current state unknown.” Resuming the agent produced a fresh accepted heartbeat
+and the dashboard returned to “Latest snapshot.”
+
+This verifies the owner browser → hosted API/storage → Node agent path on one
+installation, including interruption/recovery. Real second-account denial,
+logout/reboot service relaunch, and native-app cloud integration remain unverified.
+No machine snapshots or personal configuration are included in the repository.

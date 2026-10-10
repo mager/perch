@@ -12,11 +12,14 @@ assets exist. Optional Tailscale reporting collects only the local machine's sta
 and addresses, enabled with PERCH_TAILSCALE=1. It does not change authentication
 or make the Vercel portal tailnet-only. Local unit/API and browser tests cover the sample UI and authentication
 boundaries. Hosted Google and Redis configuration now exists. Public login metadata returns 200;
-unauthenticated and machine-token status reads return 401. Real owner sign-in,
-Redis reads/writes, and launchd still require integration testing.
-The landing page and unconfigured app shell are deployed at
+unauthenticated and machine-token status reads return 401. An owner-signed-in
+browser has read a real Mac heartbeat through Redis, and the Node.js user
+LaunchAgent is installed on that Mac. A live stop of more than three minutes showed overdue/unknown with the retained
+snapshot, and resuming the Node agent restored fresh data. Native app cloud
+integration, login-item relaunch, and real second-account denial remain unverified.
+The landing page and owner-restricted dashboard are deployed at
 `https://perch-mac-app.vercel.app`; live routes and the hero asset were checked.
-Do not describe real machine monitoring as end-to-end verified.
+Distinguish the verified Node agent path from the native developer preview.
 
 ## Commands
 

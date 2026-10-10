@@ -35,7 +35,9 @@ test('sample dashboard, switching machines, and every sample state',async({page}
   await expect(page.getByText('Last snapshot retained. The machine’s current state is unknown.')).toBeVisible();
   await page.getByRole('button',{name:'Studio mini',exact:true}).click();
   await page.getByLabel('Explore a state').selectOption('empty');
-  await expect(page.getByRole('heading',{name:'Waiting for the first hello.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Connect the Mac you want to monitor.'})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Get Perch for Mac'})).toHaveAttribute('href','/#download');
+  await expect(page.getByText('Install Perch on that Mac.',{exact:false})).toBeVisible();
   await page.getByLabel('Explore a state').selectOption('unavailable');
   await expect(page.getByText('Disk could not be collected')).toBeVisible();
   await expect(page.getByText('tmux data is unavailable.',{exact:false})).toBeVisible();

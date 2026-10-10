@@ -6,13 +6,16 @@ quiet. Self-hosted, MIT-licensed, and designed for one owner with up to ten mach
 
 **Implemented:** landing page, responsive dashboard, SVG identity, backend, Node.js
 agent, and a native Swift menu bar app in developer preview. Local unit/API tests and browser checks are included. The sample dashboard
-is usable now. Real Google sign-in, Upstash, and launchd still need end-to-end
-verification. Running the demo creates no accounts or agent services.
+is usable now. A real owner session has read a Mac heartbeat through hosted Redis,
+and the Node.js LaunchAgent has been installed and started on that Mac. A real
+reporting interruption retained a stale snapshot and recovered after restart. Native
+app cloud integration and login-item relaunch remain unverified. Running the demo
+creates no accounts or agent services.
 
 The [project landing page](https://perch-mac-app.vercel.app) is deployed on Vercel.
 Its dashboard now offers owner-restricted Google sign-in. Live unauthenticated
-status reads are rejected; successful owner sign-in and Redis-backed monitoring
-still need integration verification. Use the local demo below for a sample preview.
+status reads are rejected; successful owner sign-in and a real Redis-backed
+heartbeat have been verified on one installation. Use the local demo below for a sample preview.
 
 ## What it reports
 
