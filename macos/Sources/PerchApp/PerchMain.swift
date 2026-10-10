@@ -8,6 +8,16 @@ import PerchCore
     private var window: NSWindow?
     private var state: AppState!
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let menu = NSMenu()
+        let appMenuItem = NSMenuItem(); menu.addItem(appMenuItem)
+        let appMenu = NSMenu(); appMenuItem.submenu = appMenu
+        let show = appMenu.addItem(withTitle: "Show Perch", action: #selector(togglePopover), keyEquivalent: "p")
+        show.keyEquivalentModifierMask = [.command, .shift]; show.target = self
+        let settings = appMenu.addItem(withTitle: "Settings…", action: #selector(showSettings), keyEquivalent: ",")
+        settings.target = self
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Quit Perch", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        NSApp.mainMenu = menu
         state = AppState(preview: CommandLine.arguments.contains("--preview"))
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = Bird.image()
@@ -15,7 +25,10 @@ import PerchCore
         item.button?.setAccessibilityLabel("Perch")
         item.button?.target = self; item.button?.action = #selector(togglePopover)
         popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: MenuPanel(state: state, monitor: state.monitor, settings: { [weak self] in self?.showSettings() }, quit: { NSApp.terminate(nil) }))
+        let panel = NSHostingController(rootView: MenuPanel(state: state, monitor: state.monitor, settings: { [weak self] in self?.showSettings() }, quit: { NSApp.terminate(nil) }))
+        panel.preferredContentSize = NSSize(width: 360, height: 440)
+        popover.contentViewController = panel
+        popover.contentSize = panel.preferredContentSize
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(woke), name: NSWorkspace.didWakeNotification, object: nil)
         if state.configuration == nil { showSettings() }
     }
@@ -23,7 +36,7 @@ import PerchCore
         if popover.isShown { popover.performClose(nil) }
         else if let button = item.button { popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY); NSApp.activate(ignoringOtherApps: true) }
     }
-    private func showSettings() {
+    @objc private func showSettings() {
         popover.performClose(nil)
         state.loginStatus = SMAppService.mainApp.status
         if let window, window.isVisible { window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
@@ -46,6 +59,23 @@ import ServiceManagement
 @main
 struct PerchMain {
     @MainActor static func main() throws {
+if CommandLine.arguments.contains("--sample-heartbeat") {
+    FileHandle.standardOutput.write(try JSONEncoder().encode(Snapshot.sample))
+    return
+}
+if CommandLine.arguments.contains("--check-keychain") {
+    let config = try Configuration(origin: "https://perch-keychain-test.invalid", machineID: "test-" + UUID().uuidString.lowercased().prefix(30))
+    let token = UUID().uuidString + UUID().uuidString
+    try TokenStore.save(token, for: config)
+    defer { try? TokenStore.delete(config) }
+    guard try TokenStore.read(config) == token else { throw PerchError.keychain }
+    try TokenStore.save(token + "updated", for: config)
+    guard try TokenStore.read(config) == token + "updated" else { throw PerchError.keychain }
+    try TokenStore.delete(config)
+    do { _ = try TokenStore.read(config); throw PerchError.configuration("Test token still present") }
+    catch PerchError.keychain { print("Keychain write/read/update/delete passed (temporary test credential).") }
+    return
+}
 let app = NSApplication.shared
 if let index = CommandLine.arguments.firstIndex(of: "--render-icon"), CommandLine.arguments.count > index + 1 {
     let directory = URL(fileURLWithPath: CommandLine.arguments[index + 1])

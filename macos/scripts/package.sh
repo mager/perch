@@ -67,6 +67,17 @@ mkdir "$DMG_ROOT"
 ditto "$APP" "$DMG_ROOT/Perch.app"
 ln -s /Applications "$DMG_ROOT/Applications"
 cp "$ROOT/macos/INSTALL.txt" "$DMG_ROOT/Start here.txt"
+if [[ "$MODE" == --release ]]; then
+  python3 - "$DMG_ROOT/Start here.txt" <<'PYTHON'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+s = p.read_text().replace('0.2.0 developer preview', '0.2.0')
+s = s.replace('This development build is NOT Developer ID signed or notarized by Apple.\nIt is for local evaluation. Normal public distribution is pending Apple signing\nand notarization; do not disable Gatekeeper to use an untrusted download.',
+              'This release is Developer ID signed and notarized by Apple.')
+p.write_text(s)
+PYTHON
+fi
 hdiutil create -volname Perch -srcfolder "$DMG_ROOT" -format UDZO -ov "$OUT/$NAME.dmg"
 if [[ "$MODE" == --release ]]; then
   codesign --timestamp --sign "$PERCH_SIGNING_IDENTITY" "$OUT/$NAME.dmg"

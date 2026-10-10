@@ -16,6 +16,11 @@ jobs:
         run: swift test --package-path macos
       - name: Build developer-preview app and DMG
         run: macos/scripts/package.sh --development
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Native-to-server wire format
+        run: macos/dist/Perch.app/Contents/MacOS/Perch --sample-heartbeat | node macos/scripts/check-protocol.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: Perch-mac-developer-preview

@@ -8,10 +8,10 @@ async function json(route,data,status=200){await route.fulfill({status,contentTy
 
 test('landing downloads a real agent ZIP with accurate prerequisites and checksum',async({page})=>{
   await page.goto('/');
-  await page.getByRole('link',{name:'Download Mac agent',exact:true}).click();
+  await page.getByRole('link',{name:'Get Perch for Mac',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Perch for your Mac.'})).toBeVisible();
   await expect(page.getByText('Source ZIP · Node.js 22 required · Apple silicon & Intel')).toBeVisible();
-  await expect(page.getByText('A native menu bar app is not available yet.',{exact:false})).toBeVisible();
+  await expect(page.getByText('This ZIP contains source files, not the native Mac app.',{exact:false})).toBeVisible();
   const downloadEvent=page.waitForEvent('download');
   await page.getByRole('link',{name:'Download Mac agent (ZIP)',exact:false}).click();
   const download=await downloadEvent;

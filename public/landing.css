@@ -5,3 +5,5 @@
 .download{padding-bottom:0}.download .download-meta{font-size:.75rem;margin:20px auto 12px}.download .download-note{font-size:.8125rem;max-width:570px;margin:12px auto}.checksum-link{display:inline-block;font-size:.75rem;color:var(--muted);min-height:44px;padding:12px 0}
 
 .landing-footer .footer-credit{display:flex;align-items:center;gap:10px;line-height:1.6}.footer-credit .chicago-flag{display:block;width:30px;height:20px;flex-shrink:0}.footer-credit a{display:inline-block;padding:12px 0;color:var(--ink);font-weight:550;text-underline-offset:3px}.footer-credit a:hover{color:var(--accent)}
+
+.download h3{margin:28px 0 0;font-size:1.125rem;font-weight:600}

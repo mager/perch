@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {sanitize} from '../../src/schema.mjs';
+let input='';
+for await (const chunk of process.stdin) input+=chunk;
+const source=JSON.parse(input);
+const result=sanitize(source);
+assert.equal(result.platform,'darwin');
+assert.equal(result.hostname,'Sample Mac mini');
+assert.equal(result.tailscale.state,'disabled');
+assert.deepEqual(Object.keys(result).sort(),Object.keys(source).sort());
+console.log('Native fixture accepted by the server heartbeat schema.');

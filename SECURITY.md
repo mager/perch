@@ -107,3 +107,30 @@ Before connecting a real machine, verify on the configured production deployment
    mistaking an old snapshot for current state.
 4. Sign-out, session expiry, and secret rotation behave as documented on desktop
    and mobile. Review old Vercel deployments before treating rotation as complete.
+
+## Native Mac developer preview — October 10, 2026
+
+The Swift companion in `macos/` uses the existing machine-write protocol. It
+requires an HTTPS origin, refuses redirects, disables cookie/credential caches,
+bounds requests and response bodies, and requires an explicit JSON receipt.
+Tokens are stored as non-synchronizing, device-only Keychain generic passwords
+scoped to server and machine. Connection preferences are local UserDefaults;
+snapshots are memory-only. A signed update's Keychain continuity is still unverified.
+
+Collection starts only after Connect this Mac. tmux and Tailscale metadata are
+separate opt-ins. Executables are local fixed-path CLI tools with fixed read-only
+arguments, timeouts, and output limits; no server-provided commands are executed.
+The collector sends no terminal text, peer lists, or Tailscale authentication URLs.
+The app is not sandboxed, so a compromised app or locally substituted CLI remains
+a trusted-host risk. It does not weaken the portal's owner-only read authorization.
+
+Pause/reconfiguration cancels the current task and discards late UI results. A
+request already transmitted may still be accepted by the server. Quit and logout
+stop reporting; Open at login is opt-in. Do not run both this app and a LaunchAgent
+for the same machine. The app does not terminate other agents automatically.
+
+The developer app/DMG is ad-hoc signed, not Developer ID signed or notarized.
+The release script requires signing credentials and Apple notarization. A valid
+DMG checksum is not independent authenticity. Public download, signed-update
+Keychain behavior, login-item relaunch, and real owner-authenticated cloud
+interruption/recovery are release acceptance tasks, not completed integrations.

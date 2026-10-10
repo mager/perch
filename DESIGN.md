@@ -44,3 +44,11 @@ WCAG AA is the target. Native controls, semantic landmarks and tables, text stat
 visible focus, minimum 44px controls, responsive layouts, and reduced-motion support.
 No decorative pulse or page-load choreography. Browser and automated checks do not
 replace real-device and assistive-technology testing.
+
+## Native Mac companion
+
+The same bird is a monochrome template in the menu bar, adapting to macOS light
+and dark appearance. Native SwiftUI controls, system typography, restrained green
+actions, and a scrollable connection window. The menu distinguishes local samples
+from server receipts and unknown current state. No animation or inferred task
+status. First launch sends nothing; optional metadata starts off.

@@ -4,8 +4,8 @@ A private lookout for your Mac mini. Check whether it is reporting, see system
 resources and tmux sessions, and keep the last snapshot when the connection goes
 quiet. Self-hosted, MIT-licensed, and designed for one owner with up to ten machines.
 
-**Implemented:** landing page, responsive dashboard, SVG identity, backend, and Mac
-agent. Local unit/API tests and browser checks are included. The sample dashboard
+**Implemented:** landing page, responsive dashboard, SVG identity, backend, Node.js
+agent, and a native Swift menu bar app in developer preview. Local unit/API tests and browser checks are included. The sample dashboard
 is usable now. Real Google sign-in, Upstash, and launchd still need end-to-end
 verification. Running the demo creates no accounts or agent services.
 
@@ -118,6 +118,19 @@ Google Identity Services uses a short-lived signed nonce bound to the browser.
 The server verifies Google's signature, issuer, audience, expiry, owner identity,
 and nonce before issuing an eight-hour HttpOnly, Secure, SameSite=Strict cookie.
 All status APIs return `Cache-Control: no-store, private`.
+
+## Native Mac menu bar app
+
+Perch now has a native SwiftUI/AppKit companion: the bird lives in your menu bar,
+with connection setup, Keychain token storage, heartbeat receipts, pause/resume,
+and a link to your private dashboard. It needs no Node.js runtime. tmux names and
+Tailscale addresses are separate opt-ins, off by default.
+
+The developer build targets macOS 13+ on Apple silicon and Intel and packages as
+an `.app` inside a DMG. **Public Developer ID signing and notarization are still
+pending.** See [Mac app setup, builds, and release instructions](macos/README.md).
+The existing Terminal agent ZIP remains a separate option below. Stop an earlier
+agent before connecting the native app so both don't send heartbeats.
 
 ## Install the Mac agent
 
@@ -243,7 +256,8 @@ without a separate permission and threat-model design.
 Contributions are welcome under the MIT license. Submit a focused issue or patch
 with the problem, behavior change, and relevant tests. The next milestones are
 verified hosted onboarding, agent packaging, and optional structured Codex events.
-A native Mac menu bar companion is a possible follow-up.
+The native app is a developer preview; the next release step is Apple signing,
+notarization, and verified installation against a configured server.
 
 ## References
 

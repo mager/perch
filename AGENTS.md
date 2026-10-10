@@ -29,7 +29,12 @@ Do not describe real machine monitoring as end-to-end verified.
 - `npm run test:ui` runs Playwright browser and accessibility checks. Install Chromium
   first with `npx playwright install chromium`.
 
-Use Node.js 22. The remote Mac agent uses only Node built-ins.
+Use Node.js 22 for the web and Terminal agent. The native app uses Swift 6+ in
+Swift 5 language mode with macOS 13+ APIs. `swift test --package-path macos` tests
+its core; `macos/scripts/package.sh --development` builds an app and DMG. Use a
+consistent Xcode 16+ toolchain. Never change system SDK files to work around a
+local compiler problem. Public releases use `--release` with Developer ID and a
+Keychain notarytool profile. Generated binaries remain ignored by Git.
 
 ## Boundaries
 
@@ -45,10 +50,12 @@ Use Node.js 22. The remote Mac agent uses only Node built-ins.
 The selected brand is Perch: a perched bird, an Apple-inspired white canvas, bold
 centered typography, and restrained green status signals. The owner approved the
 bird-on-Mini hero artwork. Read PRODUCT.md and DESIGN.md for context. Keep the
-wordmark and identity independent of monitoring functionality. A menu bar companion
-is a future idea, not an implemented feature.
+wordmark and identity independent of monitoring functionality. A native SwiftUI/AppKit menu bar app now exists in `macos/`, with Keychain tokens
+and a universal developer-preview DMG. Developer ID signing, notarization, login-item
+relaunch, and real hosted heartbeat integration still need verification.
 The homepage has a Mac agent ZIP download, requiring Node.js 22 and a configured
-server. Do not describe this source archive as a native app or signed installer.
+server. Do not describe this source archive as a native app or signed installer. The native
+app is separate; do not promote a developer DMG as a signed public release.
 
 ## Running build log
 
