@@ -172,3 +172,11 @@ cannot enable reporting. Google owner authentication remains in the browser;
 remembering a URL grants no data access. The app does not fetch private snapshots.
 Custom URL schemes are not proof of an app’s identity; the handoff deliberately
 contains no credential. Manual dashboard input follows the same URL validation.
+
+Verification: 12 Swift tests passed on the GitHub macOS runner, including malformed
+and credential-bearing URL rejection. 17 browser checks passed, including the
+origin-only handoff, mobile layout, accessibility, and no handoff in local sample
+mode. A real owner-signed-in website opened the installed app, the reviewed address
+was saved, and the app reopened the authenticated dashboard. Manual quit/relaunch
+retained it with local monitoring unconfigured. Login-item relaunch and native
+heartbeat integration are separate, still-unverified paths.
