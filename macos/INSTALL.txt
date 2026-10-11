@@ -1,10 +1,14 @@
-Perch for Mac · 0.2.1 developer preview
+Perch for Mac · 0.3.0 developer preview
 
 1. Drag Perch.app into Applications.
 2. Open Perch. A small bird appears in your menu bar.
-3. Set up your own Perch server, then enter its HTTPS address, your machine ID,
-   and the matching write-only machine token in Perch's connection screen.
-4. Choose Connect this Mac. Confirm that the server accepts the heartbeat.
+3. On your existing web dashboard, choose Keep in menu bar.
+4. Perch shows the dashboard address. Choose Save and open. Next time, click the
+   bird and View my machines. Google sign-in stays in your browser.
+
+To monitor the Mac running this app, choose Monitor this Mac separately. Enter
+its server address, machine ID, and write-only token, then Connect this Mac.
+Viewing a dashboard requires no machine token and starts no collection.
 
 No Node.js, Terminal command, or administrator password is needed to run the app.
 The server still requires your Google owner configuration and Upstash Redis.

@@ -7,6 +7,10 @@ import PerchCore
     let monitor: Monitor
     let preview: Bool
     @Published var configuration: Configuration?
+    @Published var dashboard: Dashboard?
+    @Published var dashboardDraft = ""
+    @Published var dashboardMessage: String?
+    @Published var showingMonitor = false
     @Published var setupMessage: String?
     @Published var loginStatus = SMAppService.mainApp.status
     private let defaults = UserDefaults.standard
@@ -20,6 +24,38 @@ import PerchCore
             do { monitor.configure(config, token: try TokenStore.read(config), start: defaults.bool(forKey: "reportingEnabled")) }
             catch { setupMessage = PerchError.keychain.localizedDescription }
         }
+        if !preview {
+            dashboard = defaults.string(forKey: "dashboardOrigin").flatMap { try? Dashboard(address: $0) }
+            // Existing collectors already have a known portal; viewing is independent from now on.
+            if defaults.object(forKey: "dashboardOrigin") == nil, let configuration { dashboard = try? Dashboard(address: configuration.origin.absoluteString) }
+            dashboardDraft = dashboard?.origin.absoluteString ?? ""
+        }
+    }
+    func proposeDashboard(_ url: URL) {
+        guard !preview else { return }
+        showingMonitor = false
+        do {
+            let proposed = try Dashboard(link: url)
+            dashboardDraft = proposed.origin.absoluteString
+            dashboardMessage = "Check this address, then choose Save and open. Monitoring settings will stay as they are."
+        } catch { dashboardMessage = error.localizedDescription }
+    }
+    func saveDashboard() -> Bool {
+        guard !preview else { return false }
+        do {
+            let destination = try Dashboard(address: dashboardDraft)
+            dashboard = destination
+            defaults.set(destination.origin.absoluteString, forKey: "dashboardOrigin")
+            dashboardDraft = destination.origin.absoluteString
+            dashboardMessage = nil
+            openDashboard()
+            return true
+        } catch { dashboardMessage = error.localizedDescription; return false }
+    }
+    func forgetDashboard() {
+        guard !preview else { return }
+        defaults.set("", forKey: "dashboardOrigin")
+        dashboard = nil; dashboardDraft = ""; dashboardMessage = nil
     }
     func connect(origin: String, machineID: String, token: String, tmux: Bool, tailscale: Bool) -> Bool {
         guard !preview else { return false }
@@ -40,6 +76,11 @@ import PerchCore
             } else { setupMessage = nil }
             defaults.set(encoded, forKey: "connection"); defaults.set(true, forKey: "reportingEnabled")
             configuration = config
+            if dashboard == nil {
+                dashboard = try Dashboard(address: config.origin.absoluteString)
+                dashboardDraft = config.origin.absoluteString
+                defaults.set(dashboardDraft, forKey: "dashboardOrigin")
+            }
             monitor.configure(config, token: secret, start: true)
             return true
         } catch { setupMessage = (error as? PerchError)?.localizedDescription ?? "Couldn’t save your connection."; return false }
@@ -74,7 +115,7 @@ import PerchCore
         loginStatus = SMAppService.mainApp.status
     }
     func openDashboard() {
-        guard let configuration else { return }
-        NSWorkspace.shared.open(configuration.origin.appendingPathComponent("app"))
+        guard !preview, let dashboard else { return }
+        NSWorkspace.shared.open(dashboard.url)
     }
 }

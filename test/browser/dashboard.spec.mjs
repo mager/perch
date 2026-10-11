@@ -211,3 +211,24 @@ test('accessibility checks across landing, dashboard, and empty states',async({p
   await page.getByLabel('Explore a state').selectOption('empty');
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
 });
+
+test('authenticated HTTPS dashboard hands off only its origin; samples offer no handoff',async({page})=>{
+  await page.route('https://portal.example/**',async route=>{
+    const path=new URL(route.request().url()).pathname;
+    if(path==='/api/config')return json(route,{demo:false,signedIn:true});
+    if(path==='/api/machines')return json(route,{...fixture(),demo:false});
+    const response=await page.request.get(`http://127.0.0.1:8787${path}`);
+    await route.fulfill({response});
+  });
+  await page.goto('https://portal.example/app');
+  const handoff=page.getByRole('link',{name:'Keep in menu bar'});
+  await expect(handoff).toHaveAttribute('href','perch://dashboard?origin=https%3A%2F%2Fportal.example');
+  await expect(page.getByText('Viewing it won’t start monitoring that Mac.',{exact:false})).toBeVisible();
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  await page.setViewportSize({width:390,height:844});
+  await expect(handoff).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.goto('/app');
+  await expect(page.getByRole('heading',{name:'Studio mini',exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Keep in menu bar'})).toHaveCount(0);
+});

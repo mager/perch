@@ -161,3 +161,14 @@ This verifies the owner browser → hosted API/storage → Node agent path on on
 installation, including interruption/recovery. Real second-account denial,
 logout/reboot service relaunch, and native-app cloud integration remain unverified.
 No machine snapshots or personal configuration are included in the repository.
+
+## Desktop dashboard handoff — October 11, 2026
+
+The website’s menu bar link carries only its HTTPS origin. The native app validates
+it, presents the full address, and requires Save and open before persisting it.
+It does not accept cookies, machine tokens, machine IDs, or commands in this link.
+The saved dashboard destination is independent of collector configuration and
+cannot enable reporting. Google owner authentication remains in the browser;
+remembering a URL grants no data access. The app does not fetch private snapshots.
+Custom URL schemes are not proof of an app’s identity; the handoff deliberately
+contains no credential. Manual dashboard input follows the same URL validation.

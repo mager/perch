@@ -4,6 +4,67 @@ import PerchCore
 
 private let perchGreen = Color(red: 0.22, green: 0.40, blue: 0.25)
 
+struct CompanionView: View {
+    @ObservedObject var state: AppState
+    var finished: () -> Void
+
+    var body: some View {
+        if state.showingMonitor {
+            ConnectionView(state: state, connected: finished)
+        } else {
+            VStack(alignment: .leading, spacing: 24) {
+                HStack(spacing: 12) {
+                    Image(nsImage: Bird.image(size: 44)).accessibilityHidden(true)
+                    Text("Perch").font(.system(size: 28, weight: .semibold))
+                }
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Your machines.\nOne click away.").font(.system(size: 34, weight: .bold)).tracking(-1)
+                    Text("Keep your private dashboard in the menu bar. Sign in with Google in your browser when needed.")
+                        .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Dashboard address").font(.callout.weight(.medium))
+                    TextField("https://your-perch.vercel.app/app", text: $state.dashboardDraft)
+                        .textFieldStyle(.roundedBorder).controlSize(.large).accessibilityLabel("Dashboard address")
+                    Text("Or open your dashboard and choose Keep in menu bar to bring its address here.")
+                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                if let message = state.dashboardMessage {
+                    Text(message).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                Button(state.dashboard == nil || state.dashboardMessage != nil ? "Save and open" : "View my machines") {
+                    if state.saveDashboard() { finished() }
+                }.buttonStyle(.borderedProminent).controlSize(.large)
+                    .keyboardShortcut(.return, modifiers: .command).disabled(state.preview)
+                Label("Viewing your machines does not monitor this Mac.", systemImage: "lock.shield")
+                    .font(.callout).foregroundStyle(.secondary)
+                Divider()
+                HStack {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(state.configuration == nil ? "Want to monitor this Mac too?" : "This Mac’s reporting")
+                            .font(.headline)
+                        Text(state.configuration == nil ? "Optional. Set this up only on a Mac you want to report." : "Manage its heartbeat and optional metadata.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button(state.configuration == nil ? "Monitor this Mac…" : "Manage…") { state.showingMonitor = true }
+                }
+                HStack {
+                    Toggle("Open Perch at login", isOn: Binding(get: { state.loginStatus == .enabled }, set: state.setLogin)).disabled(state.preview)
+                    Spacer()
+                    if state.dashboard != nil { Button("Forget dashboard") { state.forgetDashboard() }.disabled(state.preview) }
+                }.font(.callout)
+                if state.loginStatus == .requiresApproval {
+                    Button("Review Login Items") { SMAppService.openSystemSettingsLoginItems() }
+                }
+                if let message = state.setupMessage { Text(message).font(.caption).foregroundStyle(.red) }
+                Spacer(minLength: 0)
+            }.padding(28).frame(width: 540, height: 660)
+                .background(Color(nsColor: .windowBackgroundColor)).tint(perchGreen)
+        }
+    }
+}
+
 struct ConnectionView: View {
     @ObservedObject var state: AppState
     var connected: () -> Void
@@ -17,6 +78,7 @@ struct ConnectionView: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 14) {
+                Button("← View my machines") { state.showingMonitor = false }.buttonStyle(.plain).foregroundStyle(perchGreen)
                 HStack(spacing: 12) {
                     Image(nsImage: Bird.image(size: 42)).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 3) {
@@ -42,7 +104,7 @@ struct ConnectionView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     if state.preview { Label("Preview only. Nothing is collected or sent.", systemImage: "eye").font(.callout).foregroundStyle(perchGreen) }
-                    Text("Connect to your own Perch server. The bird stays in your menu bar and sends a heartbeat every minute while reporting is on.")
+                    Text("Monitor this Mac only. To check a different Mac, go back to View my machines. Reporting sends a heartbeat every minute.")
                         .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     VStack(alignment: .leading, spacing: 16) {
                         field("Your Perch server", hint: "Your own deployment, not the project’s public landing page.") {
@@ -88,6 +150,7 @@ struct ConnectionView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .tint(perchGreen)
         .onAppear {
+            origin = state.dashboard?.origin.absoluteString ?? ""
             if let config = state.configuration {
                 origin = config.origin.absoluteString; machineID = config.machineID
                 tmux = config.includeTmux; tailscale = config.includeTailscale
@@ -144,18 +207,24 @@ struct MenuPanel: View {
             }
             if let message = state.setupMessage { Text(message).font(.caption).foregroundStyle(.red) }
             Divider()
+            Button("View my machines") {
+                if state.dashboard != nil { state.openDashboard() }
+                else { state.showingMonitor = false; settings() }
+            }.buttonStyle(.borderedProminent).controlSize(.large).disabled(state.preview)
+            if let dashboard = state.dashboard {
+                Text(dashboard.origin.host ?? dashboard.origin.absoluteString).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+            }
             if state.configuration != nil {
-                Button("Open dashboard") { state.openDashboard() }.buttonStyle(.borderedProminent).controlSize(.large)
                 HStack {
                     Button(monitor.enabled ? "Pause reporting" : "Resume reporting") { state.toggleReporting() }
                     Spacer()
                     Button("Send now") { monitor.sendNow() }.disabled(!monitor.enabled || monitor.busy)
                 }.disabled(state.preview)
             } else {
-                Button("Connect this Mac…", action: settings).buttonStyle(.borderedProminent).controlSize(.large)
+                Button("Monitor this Mac…") { state.showingMonitor = true; settings() }
             }
             HStack {
-                Button("Settings…", action: settings)
+                Button("Settings…") { state.showingMonitor = false; settings() }
                 Spacer()
                 Button("Quit Perch", action: quit)
             }.buttonStyle(.plain).font(.callout).foregroundStyle(.secondary)
@@ -168,7 +237,7 @@ struct MenuPanel: View {
     private func isFresh(at date: Date) -> Bool { monitor.enabled && monitor.message == nil && monitor.lastAccepted.map { date.timeIntervalSince($0) <= 180 } == true }
     private func status(at date: Date) -> String {
         if state.preview { return "A little peace of mind." }
-        if state.configuration == nil { return "Ready when you are." }
+        if state.configuration == nil { return state.dashboard == nil ? "Your private lookout." : "Your dashboard is within reach." }
         if !monitor.enabled { return "Reporting paused" }
         if monitor.message != nil { return "Heartbeat not confirmed" }
         if isFresh(at: date) { return "Heartbeats are arriving" }
@@ -178,7 +247,7 @@ struct MenuPanel: View {
     private func statusIcon(at date: Date) -> String { isFresh(at: date) ? "checkmark.circle.fill" : monitor.message != nil ? "exclamationmark.circle" : "circle.dotted" }
     private func detail(at date: Date) -> String {
         if state.preview { return "The bird lives here. Your private dashboard stays within reach." }
-        if state.configuration == nil { return "Set up your server, then connect this Mac. Nothing is collected or sent before you connect." }
+        if state.configuration == nil { return "View your machines in your browser. This Mac is not being monitored." }
         if !monitor.enabled { return "No new heartbeats are being sent. The dashboard keeps the last snapshot with its age." }
         if let message = monitor.message { return message }
         if isFresh(at: date) { return "Your server accepted this Mac’s last heartbeat." }

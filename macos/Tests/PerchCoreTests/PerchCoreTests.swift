@@ -150,3 +150,25 @@ struct TransportTests {
         NoRedirect().urlSession(session, task: session.dataTask(with: source), willPerformHTTPRedirection: response, newRequest: redirect) { next in #expect(next == nil) }
     }
 }
+
+@Test func dashboardDestinationsStaySeparateFromCredentials() throws {
+    let dashboard = try Dashboard(address: " https://perch.example/app/ ")
+    #expect(dashboard.origin.absoluteString == "https://perch.example")
+    #expect(dashboard.url.absoluteString == "https://perch.example/app")
+    let link = URL(string: "perch://dashboard?origin=https%3A%2F%2Fperch.example")!
+    #expect(try Dashboard(link: link) == dashboard)
+    for bad in ["http://perch.example", "https://user:secret@perch.example", "https://perch.example/app?token=secret", "https://perch.example/#secret", "file:///tmp/app", "https://perch.example/api/heartbeat", "https://perch.example:0"] {
+        #expect(throws: PerchError.self) { try Dashboard(address: bad) }
+    }
+    for bad in [
+        "perch://dashboard?origin=http%3A%2F%2Fperch.example",
+        "perch://dashboard?origin=https%3A%2F%2Fperch.example&token=secret",
+        "perch://dashboard?origin=https%3A%2F%2Fone.example&origin=https%3A%2F%2Ftwo.example",
+        "perch://monitor?origin=https%3A%2F%2Fperch.example",
+        "perch://dashboard/extra?origin=https%3A%2F%2Fperch.example",
+        "perch://dashboard?origin=https%3A%2F%2Fperch.example#secret",
+        "perch://user@dashboard?origin=https%3A%2F%2Fperch.example"
+    ] {
+        #expect(throws: PerchError.self) { try Dashboard(link: URL(string: bad)!) }
+    }
+}

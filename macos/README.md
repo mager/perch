@@ -1,23 +1,37 @@
 # Perch for Mac
 
 A native SwiftUI/AppKit menu bar companion for macOS 13 or later, on Apple silicon
-and Intel. It collects and sends heartbeats itself; Node.js is not required.
+and Intel. It opens your private web dashboard and can optionally collect and send heartbeats; Node.js is not required.
 The hosted portal remains independent of this app and this Mac.
 
 ## Download the developer preview
 
-[Download the DMG](https://github.com/mager/perch/releases/download/v0.2.1-preview.1/Perch-0.2.1-developer-preview.dmg) from the
-[GitHub prerelease](https://github.com/mager/perch/releases/tag/v0.2.1-preview.1), which also
+[Download the DMG](https://github.com/mager/perch/releases/download/v0.3.0-preview.1/Perch-0.3.0-developer-preview.dmg) from the
+[GitHub prerelease](https://github.com/mager/perch/releases/tag/v0.3.0-preview.1), which also
 includes its SHA-256 checksum. Requires macOS 13+ on Apple silicon or Intel.
 This preview is ad-hoc signed, **not Developer ID signed or notarized**; macOS may
 block it from opening. A signed installation experience is still pending.
 
-## First connection
+## View your machines
 
-Open `Perch.app`. The bird appears in your menu bar and opens a connection window.
-Enter your own server's HTTPS origin, the machine ID configured on that server,
-and its matching write-only machine token. Choose **Connect this Mac** in the fixed top bar to start
-collecting and sending. There is no automatic connection to the public Perch site.
+Open your existing web dashboard and choose **Keep in menu bar**. The installed
+app shows that dashboard’s address. Choose **Save and open** once, then use the
+bird → **View my machines**. You can also paste your dashboard’s HTTPS address
+into the app. Google sign-in stays in your default browser; the app does not
+share cookies or claim you are signed in. No machine token is needed to view,
+and viewing does not collect or send this Mac’s resources.
+
+The `perch://dashboard?origin=…` link contains only a server origin. It proposes
+an address for review, never saves it or changes monitoring automatically. Only
+HTTPS dashboard addresses are accepted; credentials, queries, and fragments are
+rejected. Settings lets you change or forget the saved dashboard.
+
+## Monitor this Mac (optional)
+
+Choose **Monitor this Mac** only on a Mac you want to report. Enter your own
+server’s HTTPS origin, configured machine ID, and matching write-only token.
+Choose **Connect this Mac** to start collecting and sending. Monitoring setup
+is separate from viewing a dashboard, so a laptop can remain a viewer only.
 The app does not create a server, Google OAuth client, or Redis account for you.
 
 The menu shows server acknowledgement separately from the most recent local
@@ -57,7 +71,7 @@ macos/scripts/package.sh --development
 ```
 
 The packaging script builds both architectures and writes an ad-hoc-signed
-`macos/dist/Perch.app`, `Perch-0.2.1-developer-preview.dmg`, and a SHA-256 file.
+`macos/dist/Perch.app`, `Perch-0.3.0-developer-preview.dmg`, and a SHA-256 file.
 Move an earlier `macos/dist/Perch.app` aside before packaging again. Generated
 binaries are ignored by Git. The DMG contains the app, an Applications shortcut,
 and installation notes. CI builds and retains the developer DMG as an artifact.
@@ -74,7 +88,7 @@ open macos/dist/Perch.app --args --preview
 ```
 
 Quit an existing Perch process first; Launch Services reuses an already running app.
-Normal launch opens unconfigured onboarding until a connection is saved.
+First launch offers the dashboard path. A saved dashboard opens the menu without requiring monitoring setup.
 
 ## Sign and notarize a release
 

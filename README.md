@@ -129,8 +129,9 @@ All status APIs return `Cache-Control: no-store, private`.
 ## Native Mac menu bar app
 
 Perch now has a native SwiftUI/AppKit companion: the bird lives in your menu bar,
-with connection setup, Keychain token storage, heartbeat receipts, pause/resume,
-and a link to your private dashboard. It needs no Node.js runtime. tmux names and
+with a saved dashboard shortcut independent of monitoring. Choose Keep in menu bar
+on the website, confirm its address in the app, then use View my machines.
+Optional local monitoring has Keychain token storage, heartbeat receipts, and pause/resume. It needs no Node.js runtime. tmux names and
 Tailscale addresses are separate opt-ins, off by default.
 
 The developer build targets macOS 13+ on Apple silicon and Intel and packages as

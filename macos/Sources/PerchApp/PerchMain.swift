@@ -9,6 +9,7 @@ import PerchCore
     private var state: AppState!
     private var presentationRevision = 0
     private var openingPopover = false
+    private var pendingLinks: [URL] = []
     func applicationDidFinishLaunching(_ notification: Notification) {
         let menu = NSMenu()
         let appMenuItem = NSMenuItem(); menu.addItem(appMenuItem)
@@ -33,7 +34,8 @@ import PerchCore
         popover.contentSize = panel.view.fittingSize
         popover.animates = false
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(woke), name: NSWorkspace.didWakeNotification, object: nil)
-        if state.configuration == nil { showSettings() }
+        if state.configuration == nil && state.dashboard == nil { showSettings() }
+        if let url = pendingLinks.last { state.proposeDashboard(url); pendingLinks = []; showSettings() }
     }
     @objc private func togglePopover() {
         presentationRevision += 1
@@ -64,19 +66,25 @@ import PerchCore
             window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return
         }
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 660), styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-        window.title = "Perch · Connect this Mac"
+        window.title = "Perch · Your machines"
         window.isReleasedWhenClosed = false
-        window.contentViewController = NSHostingController(rootView: ConnectionView(state: state, connected: { [weak self] in
-            self?.window?.close(); self?.window = nil; self?.togglePopover()
+        window.contentViewController = NSHostingController(rootView: CompanionView(state: state, finished: { [weak self] in
+            self?.window?.close(); self?.window = nil
         }))
         window.center(); window.makeKeyAndOrderFront(nil)
         self.window = window
         NSApp.activate(ignoringOtherApps: true)
     }
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard let url = urls.last else { return }
+        guard state != nil else { pendingLinks = [url]; return }
+        state.proposeDashboard(url)
+        showSettings()
+    }
     @objc private func woke() { state.monitor.sendNow() }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !popover.isShown && !openingPopover {
-            if state.configuration == nil || window?.isVisible == true { showSettings() }
+            if (state.configuration == nil && state.dashboard == nil) || window?.isVisible == true { showSettings() }
             else { togglePopover() }
         }
         return true

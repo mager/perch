@@ -53,3 +53,9 @@ actions, and a scrollable connection window. The bird and primary connection act
 stay in a fixed header; validation feedback appears beside that action. The menu distinguishes local samples
 from server receipts and unknown current state. No animation or inferred task
 status. First launch sends nothing; optional metadata starts off.
+
+First launch leads with View my machines: a saved HTTPS dashboard and browser
+sign-in. Keep in menu bar on the website proposes that address in the app for
+review. Monitor this Mac is a separate optional path, never a prerequisite to
+view an existing machine. The menu must not describe viewer-only mode as
+unfinished setup or claim the remote machine is reporting without fetching it.
