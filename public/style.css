@@ -69,3 +69,4 @@
 @media(max-width:599px){.control-center .metric-value.unavailable{font-size:.875rem}.control-center .network-addresses .button,.session-pages .button{min-height:44px}.control-center .network-guide{min-height:44px}}
 
 .control-center .section-head .session-pages{margin:0;flex:none}.machine-identity{min-width:0}
+.control-center .companion>a.button{padding:8px 16px;min-height:44px}
