@@ -46,9 +46,8 @@ test('sample dashboard, switching machines, and every sample state',async({page}
   await expect(page.getByText('Current state unverified',{exact:true})).toBeVisible();
   await page.getByLabel('Explore a state').selectOption('normal');
   await expect(page.getByText('Heartbeat received',{exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Sessions 2'}).click();
   await expect(page.getByRole('table')).toBeVisible();
-  await expect(page.getByRole('heading',{name:'CPU history'})).toBeHidden();
+  await expect(page.getByRole('heading',{name:'CPU history'})).toBeVisible();
 });
 test('age advances even when refresh fails',async({page})=>{
   await page.clock.install();
@@ -223,7 +222,9 @@ test('authenticated HTTPS dashboard hands off only its origin; samples offer no 
   await page.goto('https://portal.example/app');
   const handoff=page.getByRole('link',{name:'Keep in menu bar'});
   await expect(handoff).toHaveAttribute('href','perch://dashboard?origin=https%3A%2F%2Fportal.example');
+  await page.getByText('Mac app help',{exact:true}).click();
   await expect(page.getByText('Viewing it won’t start monitoring that Mac.',{exact:false})).toBeVisible();
+  await page.getByText('Mac app help',{exact:true}).click();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.setViewportSize({width:390,height:844});
   await expect(handoff).toBeVisible();
@@ -231,4 +232,35 @@ test('authenticated HTTPS dashboard hands off only its origin; samples offer no 
   await page.goto('/app');
   await expect(page.getByRole('heading',{name:'Studio mini',exact:true})).toBeVisible();
   await expect(page.getByRole('link',{name:'Keep in menu bar'})).toHaveCount(0);
+});
+
+for(const [width,height] of [[1280,720],[1440,900],[1024,768]]){
+  test(`control center fits ${width}x${height} with all sections visible`,async({page})=>{
+    await page.setViewportSize({width,height});
+    await page.goto('/app');
+    await expect(page.getByText('Heartbeat received',{exact:true})).toBeVisible();
+    for(const selector of ['.metrics','.history','.sessions','.tailscale','.foot']){
+      const box=await page.locator(selector).boundingBox();
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.y+box.height).toBeLessThanOrEqual(height);
+    }
+    expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThanOrEqual(await page.evaluate(()=>innerHeight));
+  });
+}
+test('long session lists paginate without hiding other machine information',async({page})=>{
+  await page.setViewportSize({width:1280,height:720});
+  const data=fixture();
+  data.machines[0].snapshot.sessions=Array.from({length:11},(_,i)=>({name:`session-${i+1}`,windows:1,attached:0,codexPanes:0}));
+  await page.route('**/api/machines',route=>json(route,data));
+  await page.goto('/app');
+  await expect(page.getByText('session-1',{exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThanOrEqual(await page.evaluate(()=>innerHeight));
+  await expect(page.getByText('session-4',{exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Next sessions'}).click();
+  await expect(page.getByText('session-4',{exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'CPU history'})).toBeVisible();
+  await page.getByRole('button',{name:'Next sessions'}).click();
+  await page.getByRole('button',{name:'Next sessions'}).click();
+  await expect(page.getByText('session-11',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Next sessions'})).toBeDisabled();
 });

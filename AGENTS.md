@@ -78,3 +78,8 @@ Keep in menu bar link passes only its HTTPS origin; the app requires Save and op
 before persisting it. View my machines opens the default browser with existing
 Google authentication. A real website → app → browser round trip and manual app
 restart were verified for 0.3.0; this is not native heartbeat or login-item testing.
+
+The web dashboard uses a compact two-column control center on laptops, with
+resources, history, sessions, and network visible together. Session lists paginate
+three rows at a time. Keep responsive stacking and explicit freshness labels;
+never use overflow clipping to claim that everything fits a screen.

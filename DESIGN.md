@@ -17,11 +17,16 @@ illustrative dashboard preview, honest stale-state explanation, privacy principl
 and self-hosting instructions. Do not imply that the illustration is actual hardware
 identification or that sample metrics are live.
 
-Dashboard: horizontal machine chooser, centered name and heartbeat, open three-column
-resource strip, fine history plot, and session rows. Native system sans typography,
-monospace only for detailed data. At narrow widths resource metrics stack; chart axis
-labels remain readable independent of SVG scaling. No nested cards or decorative
-animation. Keep keyboard focus and controls visible.
+Dashboard: a compact control center with a horizontal machine chooser in the header,
+left-aligned machine name, and a prominent heartbeat opposite it. A three-column
+resource strip and CPU history occupy the wider left column; tmux sessions and
+Tailscale context share the right. All sections are visible together, with no
+Overview/Sessions tabs. Target a single viewport at common laptop sizes without
+clipping or hiding overflow. Long session lists paginate three rows at a time.
+On phones, sections stack and scroll naturally; resources remain a compact strip.
+Native system typography, bold figures with smaller units, fine rules, and one
+green status accent. Preserve explicit stale/unavailable/sample labels, visible
+keyboard focus, and reduced motion. No nested cards or decorative animation.
 
 ## Identity and assets
 
